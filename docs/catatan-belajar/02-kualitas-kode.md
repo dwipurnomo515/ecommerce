@@ -173,5 +173,13 @@ File: [.github/workflows/tests.yml](../../.github/workflows/tests.yml)
 - ✅ `actionlint` (linter khusus GitHub Actions): tidak ada kesalahan
 - ✅ `composer ci:check` lolos di container, dan ini perintah yang sama persis dengan yang
   dijalankan CI
-- ⚠️ **Belum dijalankan di GitHub** karena project belum di-push. Hasil sebenarnya baru terlihat
-  saat push pertama.
+- ✅ **Lolos di GitHub** pada push pertama ke
+  [dwipurnomo515/ecommerce](https://github.com/dwipurnomo515/ecommerce/actions), dengan total
+  ~1 menit. Langkah `Run CI Checks` hanya butuh 15 detik, jauh lebih cepat daripada di laptop,
+  karena server GitHub tidak terkena lambatnya folder Windows.
+
+### Pelajaran: pastikan Anda mengecek hal yang benar
+
+Saat memantau CI pertama kali, run yang terpantau ternyata milik **Dependabot**, bukan workflow
+`tests`. Statusnya "success", tapi itu tidak membuktikan apa pun tentang test kita. Selalu cek
+**nama** workflow-nya, bukan hanya warna hijaunya.
