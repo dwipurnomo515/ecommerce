@@ -1,0 +1,100 @@
+# Local development stack.
+#   docker compose up -d        -> start everything
+#   docker compose exec app sh  -> shell inside the PHP container
+# App:     http://localhost:8000
+# Mailpit: http://localhost:8025
+
+x-app: &app
+    build:
+        context: .
+        target: development
+    image: ecommerce-app:dev
+    # DEV ONLY: Windows bind mounts appear as root-owned and can't be chown'ed,
+    # so the non-root www-data user can't write storage/ or node_modules/.
+    # Production images keep running as www-data.
+    user: root
+    volumes:
+        - .:/var/www/html
+    env_file: .env
+    environment:
+        # OPcache on, but re-check file timestamps every request so code
+        # edits show up immediately. Huge speedup on Windows bind mounts.
+        PHP_OPCACHE_ENABLE: '1'
+        PHP_OPCACHE_VALIDATE_TIMESTAMPS: '1'
+        PHP_OPCACHE_REVALIDATE_FREQ: '0'
+        SSL_MODE: 'off'
+    depends_on:
+        pgsql:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+
+services:
+    app:
+        <<: *app
+        ports:
+            - '${APP_PORT:-8000}:8080'
+
+    queue:
+        <<: *app
+        command:
+            [
+                'php',
+                '/var/www/html/artisan',
+                'queue:listen',
+                '--tries=3',
+                '--timeout=90',
+            ]
+        stop_signal: SIGTERM
+        healthcheck:
+            disable: true
+
+    vite:
+        <<: *app
+        command: ['npm', 'run', 'dev']
+        ports:
+            - '${VITE_PORT:-5173}:5173'
+        environment:
+            VITE_IN_DOCKER: 'true'
+        healthcheck:
+            disable: true
+
+    pgsql:
+        image: postgres:18-alpine
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:-ecommerce}
+            POSTGRES_USER: ${DB_USERNAME:-ecommerce}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
+        ports:
+            - '${FORWARD_DB_PORT:-5432}:5432'
+        volumes:
+            - pgsql-data:/var/lib/postgresql
+            - ./docker/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql:ro
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    redis:
+        image: valkey/valkey:9-alpine
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ['CMD', 'valkey-cli', 'ping']
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
+    mailpit:
+        image: axllent/mailpit:latest
+        ports:
+            - '${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025'
+
+volumes:
+    pgsql-data:
+    redis-data:
