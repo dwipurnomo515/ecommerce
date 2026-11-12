@@ -4,15 +4,15 @@ Aplikasi web e-commerce berbasis **Laravel 13** + **React 19** (TypeScript) deng
 
 ## Tech stack
 
-| Bagian       | Teknologi                                                  |
-| ------------ | ---------------------------------------------------------- |
-| Backend      | Laravel 13, PHP 8.5                                        |
-| Frontend     | React 19, TypeScript, Inertia 3, Tailwind CSS 4, shadcn/ui |
-| Auth         | Laravel Fortify (registrasi, verifikasi email, 2FA, passkeys) |
-| Database     | PostgreSQL 18                                              |
-| Cache/Queue  | Valkey (kompatibel Redis)                                  |
-| Email (dev)  | Mailpit                                                    |
-| Runtime      | Docker (`serversideup/php` FPM + Nginx)                    |
+| Bagian      | Teknologi                                                     |
+| ----------- | ------------------------------------------------------------- |
+| Backend     | Laravel 13, PHP 8.5                                           |
+| Frontend    | React 19, TypeScript, Inertia 3, Tailwind CSS 4, shadcn/ui    |
+| Auth        | Laravel Fortify (registrasi, verifikasi email, 2FA, passkeys) |
+| Database    | PostgreSQL 18                                                 |
+| Cache/Queue | Valkey (kompatibel Redis)                                     |
+| Email (dev) | Mailpit                                                       |
+| Runtime     | Docker (`serversideup/php` FPM + Nginx)                       |
 
 ## Prasyarat
 
@@ -42,11 +42,11 @@ docker compose exec app php artisan migrate
 
 Setelah itu buka:
 
-| URL                     | Isi                                   |
-| ----------------------- | ------------------------------------- |
-| http://localhost:8000   | Aplikasi                              |
-| http://localhost:8025   | Mailpit, kotak masuk email saat dev   |
-| `localhost:5432`        | PostgreSQL (user/pass: lihat `.env`)  |
+| URL                   | Isi                                  |
+| --------------------- | ------------------------------------ |
+| http://localhost:8000 | Aplikasi                             |
+| http://localhost:8025 | Mailpit, kotak masuk email saat dev  |
+| `localhost:5432`      | PostgreSQL (user/pass: lihat `.env`) |
 
 ## Perintah sehari-hari
 
@@ -86,9 +86,9 @@ Project ini berjalan dari folder Windows (bind mount), sehingga ada dua konsekue
 
 ## Troubleshooting
 
-| Gejala                                         | Solusi                                                         |
-| ---------------------------------------------- | -------------------------------------------------------------- |
-| Error 500 `laravel.log ... Permission denied`  | Jalankan ulang perintah `chmod` di langkah 3                   |
-| Port 8000/5432/5173 sudah dipakai              | Ganti `APP_PORT` / `FORWARD_DB_PORT` / `VITE_PORT` di `.env`   |
-| Perubahan React tidak muncul                   | `docker compose logs vite` lalu `docker compose restart vite`  |
-| Halaman blank, asset 404                       | Pastikan service `vite` berjalan (`docker compose ps`)         |
+| Gejala                                        | Solusi                                                        |
+| --------------------------------------------- | ------------------------------------------------------------- |
+| Error 500 `laravel.log ... Permission denied` | Jalankan ulang perintah `chmod` di langkah 3                  |
+| Port 8000/5432/5173 sudah dipakai             | Ganti `APP_PORT` / `FORWARD_DB_PORT` / `VITE_PORT` di `.env`  |
+| Perubahan React tidak muncul                  | `docker compose logs vite` lalu `docker compose restart vite` |
+| Halaman blank, asset 404                      | Pastikan service `vite` berjalan (`docker compose ps`)        |
