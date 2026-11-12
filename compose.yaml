@@ -15,7 +15,8 @@ x-app: &app
     user: root
     volumes:
         - .:/var/www/html
-    env_file: .env
+    # No env_file here on purpose: Laravel reads .env itself. Injecting it as
+    # real env vars would override phpunit.xml and make tests hit the dev DB.
     environment:
         # OPcache on, but re-check file timestamps every request so code
         # edits show up immediately. Huge speedup on Windows bind mounts.
