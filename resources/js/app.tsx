@@ -13,6 +13,7 @@ void createInertiaApp({
     layout: (name) => {
         switch (true) {
             case name === 'welcome':
+            case name === 'dev/design-system':
                 return null;
             case name.startsWith('auth/'):
                 return AuthLayout;
@@ -32,7 +33,8 @@ void createInertiaApp({
         );
     },
     progress: {
-        color: '#4B5563',
+        // Zetago primary (see --primary in resources/css/app.css)
+        color: '#0d5c55',
     },
 });
 
