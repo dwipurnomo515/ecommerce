@@ -4,6 +4,8 @@ export type User = {
     email: string;
     avatar?: string;
     email_verified_at: string | null;
+    /** UI hint only (e.g. showing the admin menu). The server always re-checks. */
+    is_admin: boolean;
     two_factor_enabled?: boolean;
     created_at: string;
     updated_at: string;
