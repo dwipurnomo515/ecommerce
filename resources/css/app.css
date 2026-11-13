@@ -9,7 +9,7 @@
 
 @theme {
     --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif,
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
@@ -28,6 +28,11 @@
 
     --color-primary: var(--primary);
     --color-primary-foreground: var(--primary-foreground);
+    --color-primary-soft: var(--primary-soft);
+
+    --color-sale: var(--sale);
+    --color-success: var(--success);
+    --color-warning: var(--warning);
 
     --color-secondary: var(--secondary);
     --color-secondary-foreground: var(--secondary-foreground);
@@ -62,74 +67,107 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    /*
+     * Zetago design tokens: direction B "Ramah" (pine green).
+     * Every colour in the UI comes from these variables. Components use the
+     * Tailwind names (bg-primary, text-muted-foreground, ...), never raw hex,
+     * so changing a value here restyles the whole app.
+     */
+
+    /* Neutrals: warm off-white page, white surfaces */
+    --background: #fbfaf8;
+    --foreground: #1a1c1b;
+    --card: #ffffff;
+    --card-foreground: #1a1c1b;
+    --popover: #ffffff;
+    --popover-foreground: #1a1c1b;
+
+    /* Brand: the only identity colour. CTAs and key highlights only. */
+    --primary: #0d5c55;
+    --primary-foreground: #ffffff;
+    --primary-soft: #e3f0ee;
+
+    --secondary: #efede8;
+    --secondary-foreground: #1a1c1b;
+    --muted: #efede8;
+    --muted-foreground: #686d6b;
+    /* shadcn uses "accent" for hover/selected backgrounds: keep it neutral */
+    --accent: #efede8;
+    --accent-foreground: #1a1c1b;
+
+    /* Functional colours: used ONLY for their meaning */
+    --destructive: #b42318;
+    --destructive-foreground: #b42318;
+    --sale: #b42318;
+    --success: #15803d;
+    --warning: #b45309;
+
+    --border: #e5e3de;
+    --input: #e5e3de;
+    --ring: #0d5c55;
+
+    --chart-1: #0d5c55;
+    --chart-2: #4fb3a8;
+    --chart-3: #b45309;
+    --chart-4: #686d6b;
+    --chart-5: #b42318;
+
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+
+    --sidebar: #f5f4f0;
+    --sidebar-foreground: #1a1c1b;
+    --sidebar-primary: #0d5c55;
+    --sidebar-primary-foreground: #ffffff;
+    --sidebar-accent: #ebe9e4;
+    --sidebar-accent-foreground: #1a1c1b;
+    --sidebar-border: #e5e3de;
+    --sidebar-ring: #0d5c55;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    /* Re-tuned, not inverted: a lighter green keeps contrast on dark */
+    --background: #141615;
+    --foreground: #ecedeb;
+    --card: #1a1d1c;
+    --card-foreground: #ecedeb;
+    --popover: #1a1d1c;
+    --popover-foreground: #ecedeb;
+
+    --primary: #4fb3a8;
+    --primary-foreground: #071a18;
+    --primary-soft: #16302d;
+
+    --secondary: #232726;
+    --secondary-foreground: #ecedeb;
+    --muted: #232726;
+    --muted-foreground: #9da3a0;
+    --accent: #232726;
+    --accent-foreground: #ecedeb;
+
+    --destructive: #f97066;
+    --destructive-foreground: #f97066;
+    --sale: #f97066;
+    --success: #4ade80;
+    --warning: #fbbf24;
+
+    --border: #2b2f2d;
+    --input: #2b2f2d;
+    --ring: #4fb3a8;
+
+    --chart-1: #4fb3a8;
+    --chart-2: #0d5c55;
+    --chart-3: #fbbf24;
+    --chart-4: #9da3a0;
+    --chart-5: #f97066;
+
+    --sidebar: #181b1a;
+    --sidebar-foreground: #ecedeb;
+    --sidebar-primary: #4fb3a8;
+    --sidebar-primary-foreground: #071a18;
+    --sidebar-accent: #232726;
+    --sidebar-accent-foreground: #ecedeb;
+    --sidebar-border: #2b2f2d;
+    --sidebar-ring: #4fb3a8;
 }
 
 @layer base {
