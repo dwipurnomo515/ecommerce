@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Http\Requests\Concerns\NormalizesSlug;
 use App\Models\Category;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
@@ -14,6 +14,8 @@ use Illuminate\Validation\Validator;
  */
 class CategoryRequest extends FormRequest
 {
+    use NormalizesSlug;
+
     public function authorize(): bool
     {
         // The route group already requires `can:admin`; checking again here
@@ -27,10 +29,8 @@ class CategoryRequest extends FormRequest
      */
     protected function prepareForValidation(): void
     {
-        $slug = $this->string('slug')->trim()->value();
-
         $this->merge([
-            'slug' => Str::slug($slug !== '' ? $slug : $this->string('name')->value()),
+            'slug' => $this->normalizedSlug(),
             'is_active' => $this->boolean('is_active', true),
             'sort_order' => $this->integer('sort_order'),
         ]);
