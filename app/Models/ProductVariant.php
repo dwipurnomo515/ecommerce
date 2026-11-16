@@ -47,6 +47,20 @@ class ProductVariant extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * A variant's identity within its product: its option combination,
+     * independent of key order. ['Ukuran' => 'M', 'Warna' => 'Hitam'] and
+     * ['Warna' => 'Hitam', 'Ukuran' => 'M'] give the same key.
+     *
+     * @param  array<string, mixed>  $options
+     */
+    public static function optionsKey(array $options): string
+    {
+        ksort($options);
+
+        return (string) json_encode($options, JSON_UNESCAPED_UNICODE);
+    }
+
     public function isOnSale(): bool
     {
         return $this->compare_at_price !== null;

@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $name
  * @property string $slug
  * @property string|null $description
+ * @property list<array{name: string, values: list<string>}> $options In the seller's order; [] for a simple product.
  * @property ProductStatus $status
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -35,7 +36,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // Not fillable on purpose: store_id (set via $store->products()->create(),
 // so a seller can never post into another store) and status (Banned is
 // admin-only, so it's always set explicitly after validation).
-#[Fillable(['category_id', 'name', 'slug', 'description'])]
+#[Fillable(['category_id', 'name', 'slug', 'description', 'options'])]
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
@@ -46,6 +47,7 @@ class Product extends Model
      */
     protected $attributes = [
         'status' => 'draft',
+        'options' => '[]',
     ];
 
     /**
@@ -73,6 +75,17 @@ class Product extends Model
     }
 
     /**
+     * The variants on sale now. Removed variants stay in the table as
+     * inactive, so carts and orders that point at them never break.
+     *
+     * @return HasMany<ProductVariant, $this>
+     */
+    public function activeVariants(): HasMany
+    {
+        return $this->variants()->where('is_active', true);
+    }
+
+    /**
      * Gallery in display order; the first image is the cover.
      *
      * @return HasMany<ProductImage, $this>
@@ -89,6 +102,7 @@ class Product extends Model
     {
         return [
             'status' => ProductStatus::class,
+            'options' => 'array',
         ];
     }
 }

@@ -16,6 +16,7 @@ class CreateProduct
      *     category_id: int,
      *     description?: string|null,
      *     status: string,
+     *     options: list<array{name: string, values: list<string>}>,
      *     variants: list<array<string, mixed>>
      * }  $data  Already validated by ProductRequest.
      */
@@ -30,6 +31,7 @@ class CreateProduct
                 'name' => $data['name'],
                 'slug' => $this->uniqueSlug($store, $data['name']),
                 'description' => $data['description'] ?? null,
+                'options' => $data['options'],
             ]);
             $product->status = ProductStatus::from($data['status']);
             $product->save();

@@ -5,6 +5,7 @@ namespace App\Http\Requests\Seller;
 use App\Enums\ProductStatus;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\ProductVariant;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
@@ -28,7 +29,22 @@ class ProductRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->can('create', Product::class) ?? false;
+        $product = $this->editedProduct();
+
+        return $product === null
+            ? $this->user()?->can('create', Product::class) ?? false
+            : $this->user()?->can('update', $product) ?? false;
+    }
+
+    /**
+     * The product being edited (PUT /seller/products/{product}), or null
+     * when creating one.
+     */
+    public function editedProduct(): ?Product
+    {
+        $product = $this->route('product');
+
+        return $product instanceof Product ? $product : null;
     }
 
     /**
@@ -40,9 +56,13 @@ class ProductRequest extends FormRequest
             'name' => ['required', 'string', 'min:3', 'max:200'],
             'category_id' => ['required', 'integer', Rule::exists(Category::class, 'id')],
             'description' => ['nullable', 'string', 'max:10000'],
-            // Sellers may publish or keep a draft; Archived/Banned make no
-            // sense for a brand-new product.
-            'status' => ['required', Rule::enum(ProductStatus::class)->only([ProductStatus::Draft, ProductStatus::Active])],
+            // Archiving only makes sense for an existing product. Banned is
+            // never accepted here: it is set by an admin only.
+            'status' => ['required', Rule::enum(ProductStatus::class)->only(
+                $this->editedProduct() === null
+                    ? [ProductStatus::Draft, ProductStatus::Active]
+                    : ProductStatus::sellerSelectable(),
+            )],
 
             'options' => ['present', 'array', 'max:'.self::MAX_OPTIONS],
             'options.*.name' => ['required', 'string', 'max:30', 'distinct:ignore_case'],
@@ -83,6 +103,13 @@ class ProductRequest extends FormRequest
 
     private function validateCategory(Validator $validator): void
     {
+        // Keeping the category the product already has is always fine, even
+        // if an admin has since deactivated it: fixing a typo in the price
+        // must not force the seller to re-categorise.
+        if ($this->integer('category_id') === $this->editedProduct()?->category_id) {
+            return;
+        }
+
         $category = Category::query()->find($this->integer('category_id'));
 
         if ($category === null || ! $category->isSelectable()) {
@@ -135,8 +162,7 @@ class ProductRequest extends FormRequest
                 continue;
             }
 
-            ksort($chosen);
-            $key = json_encode($chosen);
+            $key = ProductVariant::optionsKey($chosen);
 
             if (isset($seen[$key])) {
                 $validator->errors()->add("variants.{$i}.options", 'Kombinasi varian ini muncul dua kali.');

@@ -167,6 +167,7 @@ class CreateProductTest extends TestCase
                 'name' => 'Produk Setengah Jadi',
                 'category_id' => $this->category->id,
                 'status' => 'draft',
+                'options' => [['name' => 'Ukuran', 'values' => ['M', 'L']]],
                 'variants' => [$ok, $broken],
             ]);
             $this->fail('The database should have rejected the negative stock.');

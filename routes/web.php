@@ -24,7 +24,7 @@ Route::middleware(['auth', 'verified'])
         Route::put('store', [SellerStoreController::class, 'update'])->name('store.update');
 
         Route::resource('products', SellerProductController::class)
-            ->only(['index', 'create', 'store']);
+            ->only(['index', 'create', 'store', 'edit', 'update']);
 
         // scopeBindings: /products/1/images/99 only resolves if image 99
         // really belongs to product 1 (otherwise 404).

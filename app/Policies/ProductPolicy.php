@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Models\User;
 
@@ -24,8 +25,14 @@ class ProductPolicy
         return $user->store?->isActive() ?? false;
     }
 
+    /**
+     * Owners edit their own products, except one an admin has banned: that
+     * stays locked (photos included) until an admin lifts the ban.
+     */
     public function update(User $user, Product $product): bool
     {
-        return $user->store !== null && $product->store_id === $user->store->id;
+        return $user->store !== null
+            && $product->store_id === $user->store->id
+            && $product->status !== ProductStatus::Banned;
     }
 }
