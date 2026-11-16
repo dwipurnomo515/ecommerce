@@ -10,10 +10,26 @@ use App\Models\User;
  * current status lives in StoreStatus::canTransitionTo.)
  *
  * Laravel finds this class automatically: model Store → StorePolicy.
- * Seller abilities (update own store, ...) will be added in the seller step.
  */
 class StorePolicy
 {
+    // --- Sellers -----------------------------------------------------------
+
+    /**
+     * One store per user (also enforced by a unique index on stores.user_id).
+     */
+    public function create(User $user): bool
+    {
+        return $user->store()->doesntExist();
+    }
+
+    public function update(User $user, Store $store): bool
+    {
+        return $user->id === $store->user_id;
+    }
+
+    // --- Admins ------------------------------------------------------------
+
     public function viewAny(User $user): bool
     {
         return $user->isAdmin();

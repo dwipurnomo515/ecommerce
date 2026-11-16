@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\Seller\StoreController as SellerStoreController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -9,6 +10,17 @@ Route::inertia('/', 'welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
 });
+
+// Seller area: any verified user can open (one) store.
+Route::middleware(['auth', 'verified'])
+    ->prefix('seller')
+    ->name('seller.')
+    ->group(function () {
+        Route::get('store', [SellerStoreController::class, 'show'])->name('store.show');
+        Route::get('store/create', [SellerStoreController::class, 'create'])->name('store.create');
+        Route::post('store', [SellerStoreController::class, 'store'])->name('store.store');
+        Route::put('store', [SellerStoreController::class, 'update'])->name('store.update');
+    });
 
 // Marketplace staff only. `can:admin` runs the Gate defined in AppServiceProvider.
 Route::middleware(['auth', 'verified', 'can:admin'])
