@@ -75,6 +75,22 @@ class Category extends Model
     }
 
     /**
+     * Sellers may only use a category that is active AND whose parents are
+     * all active (deactivating "Fashion" hides "Fashion > Pria" too).
+     */
+    public function isSelectable(): bool
+    {
+        if (! $this->is_active) {
+            return false;
+        }
+
+        $ancestors = $this->ancestorIds();
+
+        return $ancestors === []
+            || self::query()->whereKey($ancestors)->where('is_active', false)->doesntExist();
+    }
+
+    /**
      * 1 for a root category, 2 for its children, 3 for grandchildren.
      */
     public function level(): int

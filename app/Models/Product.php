@@ -25,6 +25,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
+ *
+ * Only present when loaded with withCount()/withMin()/withMax()/withSum():
+ * @property-read int|null $variants_count
+ * @property-read int|string|null $variants_min_price
+ * @property-read int|string|null $variants_max_price
+ * @property-read int|string|null $variants_sum_stock
  */
 // Not fillable on purpose: store_id (set via $store->products()->create(),
 // so a seller can never post into another store) and status (Banned is

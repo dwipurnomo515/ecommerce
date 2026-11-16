@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
 use Illuminate\Support\Facades\Route;
 
@@ -20,6 +21,9 @@ Route::middleware(['auth', 'verified'])
         Route::get('store/create', [SellerStoreController::class, 'create'])->name('store.create');
         Route::post('store', [SellerStoreController::class, 'store'])->name('store.store');
         Route::put('store', [SellerStoreController::class, 'update'])->name('store.update');
+
+        Route::resource('products', SellerProductController::class)
+            ->only(['index', 'create', 'store']);
     });
 
 // Marketplace staff only. `can:admin` runs the Gate defined in AppServiceProvider.
