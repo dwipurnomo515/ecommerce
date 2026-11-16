@@ -56,6 +56,55 @@ class Category extends Model
     }
 
     /**
+     * IDs from the direct parent up to the root. One small query per level,
+     * which is fine because the tree is at most MAX_DEPTH levels deep.
+     *
+     * @return list<int>
+     */
+    public function ancestorIds(): array
+    {
+        $ids = [];
+        $parentId = $this->parent_id;
+
+        while ($parentId !== null && count($ids) <= self::MAX_DEPTH) {
+            $ids[] = $parentId;
+            $parentId = self::query()->whereKey($parentId)->value('parent_id');
+        }
+
+        return $ids;
+    }
+
+    /**
+     * 1 for a root category, 2 for its children, 3 for grandchildren.
+     */
+    public function level(): int
+    {
+        return count($this->ancestorIds()) + 1;
+    }
+
+    /**
+     * How many levels exist BELOW this category: 0 for a leaf,
+     * 1 if it has children, 2 if it also has grandchildren.
+     */
+    public function descendantDepth(): int
+    {
+        $depth = 0;
+        $ids = [$this->id];
+
+        while ($depth < self::MAX_DEPTH) {
+            $ids = self::query()->whereIn('parent_id', $ids)->pluck('id')->all();
+
+            if ($ids === []) {
+                break;
+            }
+
+            $depth++;
+        }
+
+        return $depth;
+    }
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
