@@ -89,9 +89,7 @@ class UpdateProductTest extends TestCase
             ->get(route('seller.products.edit', $this->product))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                // false = don't require the .tsx yet: the page is the next
-                // step. Remove it once resources/js/pages/seller/products/edit.tsx exists.
-                ->component('seller/products/edit', false)
+                ->component('seller/products/edit')
                 // jsonb sorts object keys ("Ukuran" before "Warna"); the
                 // options column keeps the order the seller typed.
                 ->where('product.options.0.name', 'Warna')

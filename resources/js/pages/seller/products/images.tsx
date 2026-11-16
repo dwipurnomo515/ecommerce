@@ -3,6 +3,7 @@ import { ArrowLeft, ArrowRight, ImagePlus, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import ProductImageController from '@/actions/App/Http/Controllers/Seller/ProductImageController';
 import Heading from '@/components/heading';
+import { ProductTabs } from '@/components/seller/product-tabs';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
@@ -89,10 +90,7 @@ export default function ProductImages({ product, images, maxImages }: Props) {
 
             <div className="mx-auto grid w-full max-w-4xl gap-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-4">
-                    <Heading
-                        title="Foto produk"
-                        description={`${product.name} · ${images.length} dari ${maxImages} foto. Foto pertama menjadi sampul.`}
-                    />
+                    <Heading title={product.name} />
                     <Link
                         href={productsIndex()}
                         className={buttonVariants({ variant: 'outline' })}
@@ -100,6 +98,11 @@ export default function ProductImages({ product, images, maxImages }: Props) {
                         Selesai
                     </Link>
                 </div>
+                <ProductTabs productId={product.id} current="photos" />
+                <p className="text-sm text-muted-foreground">
+                    {images.length} dari {maxImages} foto. Foto pertama menjadi
+                    sampul.
+                </p>
 
                 {left > 0 && (
                     <label

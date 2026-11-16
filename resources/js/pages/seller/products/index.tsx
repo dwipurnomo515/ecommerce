@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
 import { Clock, ImagePlus, Plus } from 'lucide-react';
+import ProductController from '@/actions/App/Http/Controllers/Seller/ProductController';
 import ProductImageController from '@/actions/App/Http/Controllers/Seller/ProductImageController';
 import Heading from '@/components/heading';
 import { SimplePagination } from '@/components/simple-pagination';
@@ -103,11 +104,7 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                                 key={p.id}
                                 className="grid grid-cols-[3.5rem_1fr] gap-x-4 gap-y-2 p-4 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center"
                             >
-                                <Link
-                                    href={ProductImageController.index(p.id)}
-                                    className="row-span-2 size-14 overflow-hidden rounded-md bg-muted sm:row-span-1"
-                                    aria-label={`Kelola foto ${p.name}`}
-                                >
+                                <div className="row-span-2 size-14 overflow-hidden rounded-md bg-muted sm:row-span-1">
                                     {p.cover_url ? (
                                         <img
                                             src={p.cover_url}
@@ -123,11 +120,21 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                                             />
                                         </span>
                                     )}
-                                </Link>
+                                </div>
                                 <div className="grid min-w-0 gap-1">
-                                    <p className="truncate font-medium">
-                                        {p.name}
-                                    </p>
+                                    {/* A banned product is locked: no link to a page that would 403. */}
+                                    {p.status === 'banned' ? (
+                                        <p className="truncate font-medium">
+                                            {p.name}
+                                        </p>
+                                    ) : (
+                                        <Link
+                                            href={ProductController.edit(p.id)}
+                                            className="truncate font-medium underline-offset-2 hover:underline"
+                                        >
+                                            {p.name}
+                                        </Link>
+                                    )}
                                     <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                                         <span className="inline-flex items-center gap-1.5 text-foreground">
                                             <span
@@ -145,16 +152,18 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                                                 {p.variants_count} varian
                                             </span>
                                         )}
-                                        <Link
-                                            href={ProductImageController.index(
-                                                p.id,
-                                            )}
-                                            className="underline-offset-2 hover:text-foreground hover:underline"
-                                        >
-                                            {p.cover_url
-                                                ? 'Kelola foto'
-                                                : 'Tambah foto'}
-                                        </Link>
+                                        {p.status !== 'banned' && (
+                                            <Link
+                                                href={ProductImageController.index(
+                                                    p.id,
+                                                )}
+                                                className="underline-offset-2 hover:text-foreground hover:underline"
+                                            >
+                                                {p.cover_url
+                                                    ? 'Kelola foto'
+                                                    : 'Tambah foto'}
+                                            </Link>
+                                        )}
                                     </p>
                                 </div>
                                 <div className="flex gap-6 text-sm tabular-nums sm:text-right">
