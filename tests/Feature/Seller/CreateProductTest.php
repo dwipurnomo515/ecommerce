@@ -105,12 +105,12 @@ class CreateProductTest extends TestCase
 
     public function test_a_simple_product_is_saved_with_one_variant(): void
     {
-        $this->actingAs($this->store->user)
+        $response = $this->actingAs($this->store->user)
             ->post(route('seller.products.store'), $this->payload())
-            ->assertRedirect(route('seller.products.index'))
             ->assertInertiaFlash('toast.type', 'success');
 
         $product = $this->store->products()->with('variants')->sole();
+        $response->assertRedirect(route('seller.products.images.index', $product));
         $this->assertSame('kaos-polos-katun', $product->slug);
         $this->assertSame(ProductStatus::Active, $product->status);
         $this->assertCount(1, $product->variants);

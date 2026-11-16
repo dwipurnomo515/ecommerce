@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
+use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,15 @@ Route::middleware(['auth', 'verified'])
 
         Route::resource('products', SellerProductController::class)
             ->only(['index', 'create', 'store']);
+
+        // scopeBindings: /products/1/images/99 only resolves if image 99
+        // really belongs to product 1 (otherwise 404).
+        Route::scopeBindings()->group(function () {
+            Route::get('products/{product}/images', [ProductImageController::class, 'index'])->name('products.images.index');
+            Route::post('products/{product}/images', [ProductImageController::class, 'store'])->name('products.images.store');
+            Route::put('products/{product}/images/order', [ProductImageController::class, 'reorder'])->name('products.images.reorder');
+            Route::delete('products/{product}/images/{image}', [ProductImageController::class, 'destroy'])->name('products.images.destroy');
+        });
     });
 
 // Marketplace staff only. `can:admin` runs the Gate defined in AppServiceProvider.

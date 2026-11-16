@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { Clock, Plus } from 'lucide-react';
+import { Clock, ImagePlus, Plus } from 'lucide-react';
+import ProductImageController from '@/actions/App/Http/Controllers/Seller/ProductImageController';
 import Heading from '@/components/heading';
 import { SimplePagination } from '@/components/simple-pagination';
 import { buttonVariants } from '@/components/ui/button';
@@ -11,6 +12,7 @@ import type { Paginated } from '@/types/pagination';
 type SellerProduct = {
     id: number;
     name: string;
+    cover_url: string | null;
     category: string;
     status: 'draft' | 'active' | 'archived' | 'banned';
     status_label: string;
@@ -99,8 +101,29 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                         {products.data.map((p) => (
                             <li
                                 key={p.id}
-                                className="grid gap-x-6 gap-y-2 p-4 sm:grid-cols-[1fr_auto] sm:items-center"
+                                className="grid grid-cols-[3.5rem_1fr] gap-x-4 gap-y-2 p-4 sm:grid-cols-[3.5rem_1fr_auto] sm:items-center"
                             >
+                                <Link
+                                    href={ProductImageController.index(p.id)}
+                                    className="row-span-2 size-14 overflow-hidden rounded-md bg-muted sm:row-span-1"
+                                    aria-label={`Kelola foto ${p.name}`}
+                                >
+                                    {p.cover_url ? (
+                                        <img
+                                            src={p.cover_url}
+                                            alt=""
+                                            loading="lazy"
+                                            className="size-full object-cover"
+                                        />
+                                    ) : (
+                                        <span className="grid size-full place-items-center text-muted-foreground">
+                                            <ImagePlus
+                                                className="size-5"
+                                                aria-hidden
+                                            />
+                                        </span>
+                                    )}
+                                </Link>
                                 <div className="grid min-w-0 gap-1">
                                     <p className="truncate font-medium">
                                         {p.name}
@@ -122,6 +145,16 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                                                 {p.variants_count} varian
                                             </span>
                                         )}
+                                        <Link
+                                            href={ProductImageController.index(
+                                                p.id,
+                                            )}
+                                            className="underline-offset-2 hover:text-foreground hover:underline"
+                                        >
+                                            {p.cover_url
+                                                ? 'Kelola foto'
+                                                : 'Tambah foto'}
+                                        </Link>
                                     </p>
                                 </div>
                                 <div className="flex gap-6 text-sm tabular-nums sm:text-right">

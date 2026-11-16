@@ -27,6 +27,9 @@ class ProductController extends Controller
 
         $products = $store->products()
             ->with('category:id,name')
+            // Only the cover per product. Laravel turns limit() inside an
+            // eager load into a per-product window query: still one query.
+            ->with(['images' => fn ($query) => $query->limit(1)])
             ->withCount('variants')
             ->withMin('variants', 'price')
             ->withMax('variants', 'price')
@@ -36,6 +39,7 @@ class ProductController extends Controller
             ->through(fn (Product $product) => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'cover_url' => $product->images->first()?->url(),
                 'category' => $product->category->name,
                 'status' => $product->status->value,
                 'status_label' => $product->status->label(),
@@ -76,9 +80,10 @@ class ProductController extends Controller
         /** @phpstan-ignore argument.type (shape is guaranteed by ProductRequest) */
         $product = $createProduct->handle($store, $request->validated());
 
-        Inertia::flash('toast', ['type' => 'success', 'message' => "Produk \"{$product->name}\" disimpan."]);
+        Inertia::flash('toast', ['type' => 'success', 'message' => "Produk \"{$product->name}\" disimpan. Sekarang tambahkan fotonya."]);
 
-        return to_route('seller.products.index');
+        // Next natural step for the seller: photos.
+        return to_route('seller.products.images.index', $product);
     }
 
     private function user(Request $request): User

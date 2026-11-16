@@ -38,6 +38,9 @@ docker compose run --rm --no-deps app chmod -R ugo+rwX storage bootstrap/cache
 # 4. Nyalakan semua service & buat tabel database
 docker compose up -d
 docker compose exec app php artisan migrate
+
+# 5. Buat link public/storage → storage/app/public (foto produk)
+docker compose exec app php artisan storage:link
 ```
 
 Setelah itu buka:
