@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\StoreController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -16,6 +17,10 @@ Route::middleware(['auth', 'verified', 'can:admin'])
     ->group(function () {
         Route::resource('categories', CategoryController::class)
             ->only(['index', 'store', 'update', 'destroy']);
+
+        Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
+        Route::post('stores/{store}/approve', [StoreController::class, 'approve'])->name('stores.approve');
+        Route::post('stores/{store}/suspend', [StoreController::class, 'suspend'])->name('stores.suspend');
     });
 
 // Living style guide for the UI components. Local development only: it is
