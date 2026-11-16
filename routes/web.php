@@ -6,9 +6,13 @@ use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
+use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
+
+// Storefront, public. Product slugs are unique per store, so the URL needs both.
+Route::get('toko/{storeSlug}/{productSlug}', [ShopProductController::class, 'show'])->name('shop.products.show');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');

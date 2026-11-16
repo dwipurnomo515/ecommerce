@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use App\Enums\ProductStatus;
+use App\Enums\StoreStatus;
 use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -96,6 +99,25 @@ class Product extends Model
     public function images(): HasMany
     {
         return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
+    /**
+     * THE definition of "a buyer may see this product". Every storefront
+     * query (detail page, listings, store page, search) goes through it, so
+     * the rule can't drift between pages:
+     *   - the seller published it (not draft/archived) and no admin banned it
+     *   - its store is approved and not suspended
+     *   - at least one variant is on sale
+     * Soft-deleted products are already excluded by SoftDeletes.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function visibleToBuyers(Builder $query): void
+    {
+        $query->where('status', ProductStatus::Active)
+            ->whereHas('store', fn (Builder $store) => $store->where('status', StoreStatus::Active))
+            ->whereHas('activeVariants');
     }
 
     /**
