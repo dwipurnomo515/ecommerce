@@ -1,8 +1,9 @@
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import { Price } from '@/components/shop/price';
 import { ProductGallery } from '@/components/shop/product-gallery';
-import { Button } from '@/components/ui/button';
+import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
     choose,
@@ -12,6 +13,7 @@ import {
     valueState,
 } from '@/lib/variant-picker';
 import type { BuyerVariant } from '@/lib/variant-picker';
+import { show as showStore } from '@/routes/shop/stores';
 
 type Props = {
     product: {
@@ -34,12 +36,8 @@ type Props = {
 
 const LOW_STOCK = 5;
 
-const joinedFormat = new Intl.DateTimeFormat('id-ID', {
-    month: 'long',
-    year: 'numeric',
-});
-
 export default function ProductPage({ product, categoryTrail, store }: Props) {
+    const joined = joinedText(store.joined_at);
     const optionNames = product.options.map((o) => o.name);
     const [selection, setSelection] = useState(() =>
         initialSelection(product.variants),
@@ -85,9 +83,12 @@ export default function ProductPage({ product, categoryTrail, store }: Props) {
                         </h1>
                         <p className="text-sm text-muted-foreground">
                             dari{' '}
-                            <span className="font-medium text-foreground">
+                            <Link
+                                href={showStore(store.slug)}
+                                className="font-medium text-foreground underline-offset-2 hover:underline"
+                            >
                                 {store.name}
-                            </span>
+                            </Link>
                         </p>
                     </div>
 
@@ -183,20 +184,23 @@ export default function ProductPage({ product, categoryTrail, store }: Props) {
                         aria-label="Penjual"
                         className="flex items-center gap-3 border-y border-border py-4"
                     >
-                        <span
-                            className="grid size-11 shrink-0 place-items-center rounded-full bg-primary-soft text-base font-semibold text-primary"
-                            aria-hidden
-                        >
-                            {store.name.charAt(0).toUpperCase()}
-                        </span>
-                        <div className="grid min-w-0 gap-0.5">
+                        <StoreAvatar name={store.name} />
+                        <div className="grid min-w-0 flex-1 gap-0.5">
                             <p className="truncate font-medium">{store.name}</p>
                             <p className="text-xs text-muted-foreground">
                                 {store.products_count} produk
-                                {store.joined_at &&
-                                    ` · Bergabung ${joinedFormat.format(new Date(store.joined_at))}`}
+                                {joined && ` · ${joined}`}
                             </p>
                         </div>
+                        <Link
+                            href={showStore(store.slug)}
+                            className={buttonVariants({
+                                variant: 'outline',
+                                size: 'sm',
+                            })}
+                        >
+                            Kunjungi toko
+                        </Link>
                     </section>
 
                     {product.description && (

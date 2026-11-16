@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\Request;
 
 /**
  * Everything a storefront grid needs, in one place: which products (only
@@ -14,6 +15,17 @@ use Illuminate\Database\Eloquent\Builder;
 final class ProductCards
 {
     public const SORTS = ['terbaru', 'termurah', 'termahal'];
+
+    /**
+     * ?sort= from the URL. Unknown values fall back to the default instead
+     * of erroring: people edit URLs, and old links should keep working.
+     */
+    public static function sortFrom(Request $request): string
+    {
+        $sort = $request->string('sort')->value();
+
+        return in_array($sort, self::SORTS, true) ? $sort : 'terbaru';
+    }
 
     /**
      * @return Builder<Product>

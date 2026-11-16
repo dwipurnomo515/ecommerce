@@ -89,6 +89,11 @@ class ProductController extends Controller
 
         return Inertia::render('seller/products/edit', [
             ...$this->formProps(),
+            // Only when buyers can actually open it; otherwise the link
+            // would lead the seller to a 404 (draft, store under review...).
+            'publicUrl' => Product::query()->visibleToBuyers()->whereKey($product->id)->exists()
+                ? route('shop.products.show', [$product->store->slug, $product->slug], absolute: false)
+                : null,
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,

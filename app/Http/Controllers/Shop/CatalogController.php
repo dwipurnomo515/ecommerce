@@ -38,7 +38,7 @@ class CatalogController extends Controller
         // for buyers, same as hidden products.
         abort_unless($category->isSelectable(), 404);
 
-        $sort = $this->sort($request);
+        $sort = ProductCards::sortFrom($request);
 
         return Inertia::render('shop/category', [
             'category' => [
@@ -67,7 +67,7 @@ class CatalogController extends Controller
     {
         // Same length cap as product names; longer input can't match anyway.
         $q = mb_substr(trim($request->string('q')->value()), 0, 200);
-        $sort = $this->sort($request);
+        $sort = ProductCards::sortFrom($request);
 
         return Inertia::render('shop/search', [
             'q' => $q,
@@ -80,17 +80,6 @@ class CatalogController extends Controller
                 ->through(fn (Product $product) => ProductCards::toCard($product)),
             'categories' => $this->rootCategories(),
         ]);
-    }
-
-    /**
-     * Unknown ?sort= values fall back to the default instead of erroring:
-     * people edit URLs, and old links should keep working.
-     */
-    private function sort(Request $request): string
-    {
-        $sort = $request->string('sort')->value();
-
-        return in_array($sort, ProductCards::SORTS, true) ? $sort : 'terbaru';
     }
 
     /**
