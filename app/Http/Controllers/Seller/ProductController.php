@@ -49,6 +49,7 @@ class ProductController extends Controller
                 'category' => $product->category->name,
                 'status' => $product->status->value,
                 'status_label' => $product->status->label(),
+                'ban_reason' => $product->ban_reason,
                 'variants_count' => $product->variants_count,
                 'min_price' => (int) $product->variants_min_price,
                 'max_price' => (int) $product->variants_max_price,

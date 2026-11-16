@@ -5,6 +5,7 @@ namespace App\Actions\Products;
 use App\Enums\ProductStatus;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -33,6 +34,18 @@ class UpdateProduct
     public function handle(Product $product, array $data): Product
     {
         return DB::transaction(function () use ($product, $data): Product {
+            // The policy checked "not banned" when the request came in, but an
+            // admin may have banned it a moment later (time-of-check vs
+            // time-of-use). Re-check on the locked row, or this save would
+            // overwrite the ban with the seller's status. ModerateProduct
+            // takes the same lock, so the two can't interleave.
+            // Eloquent's value() returns the CAST attribute: an enum, not 'banned'.
+            $current = Product::query()->lockForUpdate()->whereKey($product->id)->value('status');
+
+            if ($current === ProductStatus::Banned) {
+                throw new AuthorizationException('Produk ini diblokir admin.');
+            }
+
             // The slug is deliberately NOT regenerated from the new name:
             // links that buyers shared or Google indexed must keep working.
             $product->fill([

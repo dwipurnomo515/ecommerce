@@ -23,6 +23,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string|null $description
  * @property list<array{name: string, values: list<string>}> $options In the seller's order; [] for a simple product.
  * @property ProductStatus $status
+ * @property string|null $ban_reason Set only while banned; shown to the seller.
+ * @property CarbonImmutable|null $banned_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property CarbonImmutable|null $deleted_at
@@ -35,7 +37,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 // Not fillable on purpose: store_id (set via $store->products()->create(),
 // so a seller can never post into another store) and status (Banned is
-// admin-only, so it's always set explicitly after validation).
+// admin-only, so it's always set explicitly after validation). Same for
+// ban_reason / banned_at: only ModerateProduct writes them.
 #[Fillable(['category_id', 'name', 'slug', 'description', 'options'])]
 class Product extends Model
 {
@@ -103,6 +106,7 @@ class Product extends Model
         return [
             'status' => ProductStatus::class,
             'options' => 'array',
+            'banned_at' => 'datetime',
         ];
     }
 }

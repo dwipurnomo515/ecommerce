@@ -17,6 +17,7 @@ type SellerProduct = {
     category: string;
     status: 'draft' | 'active' | 'archived' | 'banned';
     status_label: string;
+    ban_reason: string | null;
     variants_count: number;
     min_price: number;
     max_price: number;
@@ -165,6 +166,14 @@ export default function ProductsIndex({ products, canCreate }: Props) {
                                             </Link>
                                         )}
                                     </p>
+                                    {p.ban_reason && (
+                                        <p className="text-sm">
+                                            <span className="font-medium text-destructive">
+                                                Diblokir admin:
+                                            </span>{' '}
+                                            {p.ban_reason}
+                                        </p>
+                                    )}
                                 </div>
                                 <div className="flex gap-6 text-sm tabular-nums sm:text-right">
                                     <div className="grid">

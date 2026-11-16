@@ -35,4 +35,11 @@ class ProductPolicy
             && $product->store_id === $user->store->id
             && $product->status !== ProductStatus::Banned;
     }
+
+    // --- Admins ------------------------------------------------------------
+
+    public function moderate(User $user): bool
+    {
+        return $user->isAdmin();
+    }
 }

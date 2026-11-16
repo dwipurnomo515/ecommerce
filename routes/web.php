@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
@@ -47,6 +48,10 @@ Route::middleware(['auth', 'verified', 'can:admin'])
         Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('stores/{store}/approve', [StoreController::class, 'approve'])->name('stores.approve');
         Route::post('stores/{store}/suspend', [StoreController::class, 'suspend'])->name('stores.suspend');
+
+        Route::get('products', [AdminProductController::class, 'index'])->name('products.index');
+        Route::post('products/{product}/ban', [AdminProductController::class, 'ban'])->name('products.ban');
+        Route::post('products/{product}/unban', [AdminProductController::class, 'unban'])->name('products.unban');
     });
 
 // Living style guide for the UI components. Local development only: it is
