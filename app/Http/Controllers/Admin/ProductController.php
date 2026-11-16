@@ -7,6 +7,7 @@ use App\Enums\ProductStatus;
 use App\Exceptions\InvalidStatusTransition;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Support\Like;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,7 +34,7 @@ class ProductController extends Controller
             ->withMax(['variants' => $onlyActive], 'price')
             ->where('status', $status)
             ->when($search !== '', function (Builder $query) use ($search): void {
-                $pattern = '%'.$this->escapeLike($search).'%';
+                $pattern = Like::contains($search);
                 // Product name OR store name, case-insensitive (Postgres ILIKE).
                 $query->where(fn (Builder $q) => $q
                     ->where('name', 'ilike', $pattern)
@@ -107,15 +108,5 @@ class ProductController extends Controller
         }
 
         return back();
-    }
-
-    /**
-     * In LIKE patterns % and _ are wildcards. Searching for "100%" must look
-     * for the text "100%", not "100 followed by anything". Postgres uses \
-     * as the default escape character.
-     */
-    private function escapeLike(string $value): string
-    {
-        return str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
     }
 }

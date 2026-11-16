@@ -6,10 +6,13 @@ use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
+use App\Http\Controllers\Shop\CatalogController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [CatalogController::class, 'home'])->name('home');
+Route::get('kategori/{slug}', [CatalogController::class, 'category'])->name('shop.categories.show');
+Route::get('cari', [CatalogController::class, 'search'])->name('shop.search');
 
 // Storefront, public. Product slugs are unique per store, so the URL needs both.
 Route::get('toko/{storeSlug}/{productSlug}', [ShopProductController::class, 'show'])->name('shop.products.show');

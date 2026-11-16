@@ -75,6 +75,27 @@ class Category extends Model
     }
 
     /**
+     * This category plus every ACTIVE category below it, so the "Fashion"
+     * page also lists products filed under "Fashion › Pria › Kaos".
+     * One query per level (at most MAX_DEPTH).
+     *
+     * @return list<int>
+     */
+    public function selfAndActiveDescendantIds(): array
+    {
+        $ids = [$this->id];
+        $level = [$this->id];
+
+        for ($depth = 1; $depth < self::MAX_DEPTH && $level !== []; $depth++) {
+            /** @var list<int> $level */
+            $level = self::query()->whereIn('parent_id', $level)->where('is_active', true)->pluck('id')->all();
+            $ids = [...$ids, ...$level];
+        }
+
+        return $ids;
+    }
+
+    /**
      * Sellers may only use a category that is active AND whose parents are
      * all active (deactivating "Fashion" hides "Fashion > Pria" too).
      */
