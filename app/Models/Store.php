@@ -3,13 +3,13 @@
 namespace App\Models;
 
 use App\Enums\StoreStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\StoreFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -19,9 +19,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $description
  * @property string|null $logo_path
  * @property StoreStatus $status
- * @property Carbon|null $approved_at
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $approved_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 // Not fillable on purpose: user_id (set via $user->store()->create()),
 // status and approved_at (changed only by admin actions, never by form input).

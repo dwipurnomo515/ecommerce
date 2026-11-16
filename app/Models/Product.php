@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ProductStatus;
+use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Carbon;
 
 /**
  * Price and stock live on variants; every product has at least one.
@@ -22,9 +22,9 @@ use Illuminate\Support\Carbon;
  * @property string $slug
  * @property string|null $description
  * @property ProductStatus $status
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property Carbon|null $deleted_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ * @property CarbonImmutable|null $deleted_at
  */
 // Not fillable on purpose: store_id (set via $store->products()->create(),
 // so a seller can never post into another store) and status (Banned is

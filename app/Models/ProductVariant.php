@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
 use Database\Factories\ProductVariantFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Support\Carbon;
 
 /**
  * The sellable unit (what goes into a cart). Money is whole Rupiah.
@@ -21,8 +21,8 @@ use Illuminate\Support\Carbon;
  * @property int $stock
  * @property int $weight_grams
  * @property bool $is_active
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
  */
 #[Fillable(['sku', 'options', 'price', 'compare_at_price', 'stock', 'weight_grams', 'is_active'])]
 class ProductVariant extends Model
