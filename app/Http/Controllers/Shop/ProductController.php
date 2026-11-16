@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Shop;
 
 use App\Http\Controllers\Controller;
+use App\Models\CartItem;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -24,7 +26,7 @@ class ProductController extends Controller
      * 404 as one that never existed. A 403 would tell anyone that a draft
      * or banned product is there.
      */
-    public function show(string $storeSlug, string $productSlug): Response
+    public function show(Request $request, string $storeSlug, string $productSlug): Response
     {
         $product = Product::query()
             ->visibleToBuyers()
@@ -42,6 +44,7 @@ class ProductController extends Controller
             'product' => [
                 'id' => $product->id,
                 'name' => $product->name,
+                'slug' => $product->slug,
                 'description' => $product->description,
                 // Search engines and link previews show ~155 characters.
                 'summary' => Str::limit(Str::squish((string) $product->description), 155),
@@ -60,6 +63,10 @@ class ProductController extends Controller
                 ]),
             ],
             'categoryTrail' => $this->trail($product->category),
+            // The seller viewing their own product gets an edit link
+            // instead of buy buttons (AddToCart refuses it anyway).
+            'isOwner' => $request->user()?->store?->id === $product->store_id,
+            'maxQuantity' => CartItem::MAX_QUANTITY,
             'store' => [
                 'name' => $product->store->name,
                 'slug' => $product->store->slug,

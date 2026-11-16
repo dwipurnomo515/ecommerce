@@ -1,5 +1,7 @@
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { Minus, Plus, ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
+import CartController from '@/actions/App/Http/Controllers/Shop/CartController';
 import { Price } from '@/components/shop/price';
 import { ProductGallery } from '@/components/shop/product-gallery';
 import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
@@ -13,12 +15,14 @@ import {
     valueState,
 } from '@/lib/variant-picker';
 import type { BuyerVariant } from '@/lib/variant-picker';
+import { edit as editProduct } from '@/routes/seller/products';
 import { show as showStore } from '@/routes/shop/stores';
 
 type Props = {
     product: {
         id: number;
         name: string;
+        slug: string;
         description: string | null;
         summary: string;
         options: { name: string; values: string[] }[];
@@ -32,11 +36,19 @@ type Props = {
         joined_at: string | null;
         products_count: number;
     };
+    isOwner: boolean;
+    maxQuantity: number;
 };
 
 const LOW_STOCK = 5;
 
-export default function ProductPage({ product, categoryTrail, store }: Props) {
+export default function ProductPage({
+    product,
+    categoryTrail,
+    store,
+    isOwner,
+    maxQuantity,
+}: Props) {
     const joined = joinedText(store.joined_at);
     const optionNames = product.options.map((o) => o.name);
     const [selection, setSelection] = useState(() =>
@@ -46,6 +58,51 @@ export default function ProductPage({ product, categoryTrail, store }: Props) {
     const variant = selectedVariant(product.variants, optionNames, selection);
     const range = priceRange(product.variants);
     const soldOut = variant !== null && variant.stock === 0;
+
+    const { auth } = usePage().props;
+    const [wantedQuantity, setQuantity] = useState(1);
+    const maxForVariant = Math.max(
+        1,
+        Math.min(variant?.stock ?? 1, maxQuantity),
+    );
+    // Switching to a variant with less stock lowers the number shown,
+    // without a useEffect: derive it instead of syncing state.
+    const quantity = Math.min(wantedQuantity, maxForVariant);
+
+    const cart = useForm({ variant_id: 0, quantity: 1 });
+    const cartError = cart.errors.quantity ?? cart.errors.variant_id;
+
+    const addToCart = () => {
+        if (!variant) {
+            return;
+        }
+
+        cart.transform(() => ({ variant_id: variant.id, quantity }));
+        cart.submit(CartController.store(), {
+            preserveScroll: true,
+            onSuccess: () => setQuantity(1),
+        });
+    };
+
+    const addButton = (size: 'lg' | 'default') =>
+        auth.user ? (
+            <Button
+                size={size}
+                onClick={addToCart}
+                disabled={!variant || soldOut || cart.processing}
+            >
+                <ShoppingBag />
+                {soldOut ? 'Stok habis' : 'Tambah ke keranjang'}
+            </Button>
+        ) : (
+            // Guests: log in first, then land back on this product.
+            <Link
+                href={CartController.loginToBuy([store.slug, product.slug])}
+                className={buttonVariants({ size })}
+            >
+                Masuk untuk membeli
+            </Link>
+        );
 
     const price = variant ? (
         <Price
@@ -178,7 +235,51 @@ export default function ProductPage({ product, categoryTrail, store }: Props) {
                         </p>
                     )}
 
-                    <BuyButtons disabled />
+                    {isOwner ? (
+                        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/60 p-4 text-sm">
+                            <p>Ini produk toko Anda.</p>
+                            <Link
+                                href={editProduct(product.id)}
+                                className={buttonVariants({
+                                    variant: 'outline',
+                                    size: 'sm',
+                                })}
+                            >
+                                Edit produk
+                            </Link>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4">
+                            {variant && !soldOut && (
+                                <QuantityStepper
+                                    value={quantity}
+                                    max={maxForVariant}
+                                    onChange={setQuantity}
+                                />
+                            )}
+                            <div className="hidden gap-2 md:grid">
+                                <div className="grid grid-cols-2 gap-2">
+                                    {addButton('lg')}
+                                    {/* Checkout is the next step of Tahap 4. */}
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        disabled
+                                    >
+                                        Beli sekarang
+                                    </Button>
+                                </div>
+                            </div>
+                            {cartError && (
+                                <p
+                                    role="alert"
+                                    className="text-sm text-destructive"
+                                >
+                                    {cartError}
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     <section
                         aria-label="Penjual"
@@ -227,32 +328,56 @@ export default function ProductPage({ product, categoryTrail, store }: Props) {
                         <Price amount={range.min} />
                     )}
                 </div>
-                <Button disabled>Tambah ke keranjang</Button>
+                {!isOwner && addButton('default')}
             </div>
         </>
     );
 }
 
-/**
- * Cart and checkout arrive in Tahap 4. Until then the buttons are shown
- * (so the layout is final) but honestly disabled with a reason.
- */
-function BuyButtons({ disabled }: { disabled: boolean }) {
+function QuantityStepper({
+    value,
+    max,
+    onChange,
+}: {
+    value: number;
+    max: number;
+    onChange: (value: number) => void;
+}) {
     return (
-        <div className="hidden gap-2 md:grid">
-            <div className="grid grid-cols-2 gap-2">
-                <Button size="lg" disabled={disabled}>
-                    Tambah ke keranjang
-                </Button>
-                <Button size="lg" variant="outline" disabled={disabled}>
-                    Beli sekarang
-                </Button>
+        <div className="flex items-center gap-3">
+            <span className="text-sm text-muted-foreground" id="qty-label">
+                Jumlah
+            </span>
+            <div
+                role="group"
+                aria-labelledby="qty-label"
+                className="inline-flex h-10 items-center rounded-md border border-border"
+            >
+                <button
+                    type="button"
+                    onClick={() => onChange(value - 1)}
+                    disabled={value <= 1}
+                    aria-label="Kurangi"
+                    className="grid h-full w-10 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
+                >
+                    <Minus className="size-4" />
+                </button>
+                <span
+                    className="w-10 text-center text-sm font-medium tabular-nums"
+                    aria-live="polite"
+                >
+                    {value}
+                </span>
+                <button
+                    type="button"
+                    onClick={() => onChange(value + 1)}
+                    disabled={value >= max}
+                    aria-label="Tambah"
+                    className="grid h-full w-10 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
+                >
+                    <Plus className="size-4" />
+                </button>
             </div>
-            {disabled && (
-                <p className="text-xs text-muted-foreground">
-                    Keranjang dan pembayaran sedang disiapkan.
-                </p>
-            )}
         </div>
     );
 }

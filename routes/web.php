@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
+use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CatalogController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use App\Http\Controllers\Shop\StoreController as ShopStoreController;
@@ -18,6 +19,12 @@ Route::get('cari', [CatalogController::class, 'search'])->name('shop.search');
 // Storefront, public. Product slugs are unique per store, so the URL needs both.
 Route::get('toko/{storeSlug}', [ShopStoreController::class, 'show'])->name('shop.stores.show');
 Route::get('toko/{storeSlug}/{productSlug}', [ShopProductController::class, 'show'])->name('shop.products.show');
+
+// Buying needs an account (the cart is stored per user).
+Route::middleware('auth')->group(function () {
+    Route::get('toko/{storeSlug}/{productSlug}/beli', [CartController::class, 'loginToBuy'])->name('shop.products.login-to-buy');
+    Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
+});
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
