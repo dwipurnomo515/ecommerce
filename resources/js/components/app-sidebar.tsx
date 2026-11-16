@@ -4,6 +4,7 @@ import {
     FolderGit2,
     FolderTree,
     LayoutGrid,
+    Package,
     Store,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -22,6 +23,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminStores } from '@/routes/admin/stores';
+import { index as sellerProducts } from '@/routes/seller/products';
 import { show as sellerStore } from '@/routes/seller/store';
 import type { NavItem } from '@/types';
 
@@ -36,6 +38,11 @@ const mainNavItems: NavItem[] = [
         title: 'Toko saya',
         href: sellerStore(),
         icon: Store,
+    },
+    {
+        title: 'Produk',
+        href: sellerProducts(),
+        icon: Package,
     },
 ];
 

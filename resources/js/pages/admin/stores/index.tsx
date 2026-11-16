@@ -2,6 +2,7 @@ import { Form, Head, Link } from '@inertiajs/react';
 import { useState } from 'react';
 import StoreController from '@/actions/App/Http/Controllers/Admin/StoreController';
 import Heading from '@/components/heading';
+import { SimplePagination } from '@/components/simple-pagination';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
@@ -14,6 +15,7 @@ import {
 import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { index } from '@/routes/admin/stores';
+import type { Paginated } from '@/types/pagination';
 
 type StoreStatus = 'pending' | 'active' | 'suspended';
 
@@ -26,15 +28,6 @@ type AdminStore = {
     owner: { name: string; email: string };
     created_at: string | null;
     approved_at: string | null;
-};
-
-type Paginated<T> = {
-    data: T[];
-    current_page: number;
-    last_page: number;
-    total: number;
-    prev_page_url: string | null;
-    next_page_url: string | null;
 };
 
 type Props = {
@@ -183,22 +176,7 @@ export default function StoresIndex({ stores, status, tabs }: Props) {
                     </ul>
                 )}
 
-                {stores.last_page > 1 && (
-                    <div className="flex items-center justify-between text-sm text-muted-foreground">
-                        <span className="tabular-nums">
-                            Halaman {stores.current_page} dari{' '}
-                            {stores.last_page}
-                        </span>
-                        <div className="flex gap-2">
-                            <PageLink url={stores.prev_page_url}>
-                                Sebelumnya
-                            </PageLink>
-                            <PageLink url={stores.next_page_url}>
-                                Berikutnya
-                            </PageLink>
-                        </div>
-                    </div>
-                )}
+                <SimplePagination page={stores} />
             </div>
 
             <SuspendDialog
@@ -213,23 +191,6 @@ export default function StoresIndex({ stores, status, tabs }: Props) {
 StoresIndex.layout = {
     breadcrumbs: [{ title: 'Toko', href: index() }],
 };
-
-function PageLink({ url, children }: { url: string | null; children: string }) {
-    const className = buttonVariants({ variant: 'outline', size: 'sm' });
-
-    return url ? (
-        <Link href={url} preserveScroll className={className}>
-            {children}
-        </Link>
-    ) : (
-        <span
-            aria-disabled
-            className={cn(className, 'pointer-events-none opacity-50')}
-        >
-            {children}
-        </span>
-    );
-}
 
 function SuspendDialog({
     store,
