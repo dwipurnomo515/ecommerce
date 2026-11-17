@@ -37,6 +37,14 @@ return [
         'couriers' => env('RAJAONGKIR_COURIERS', 'jne:sicepat:jnt:pos'),
     ],
 
+    // Payments. The server key is a SECRET (never sent to the browser,
+    // never committed); the client key is public, used by snap.js.
+    'midtrans' => [
+        'server_key' => env('MIDTRANS_SERVER_KEY'),
+        'client_key' => env('MIDTRANS_CLIENT_KEY'),
+        'production' => (bool) env('MIDTRANS_PRODUCTION', false),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

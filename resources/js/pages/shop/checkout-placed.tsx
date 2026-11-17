@@ -1,11 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
 import { CircleCheck, CircleX, Clock } from 'lucide-react';
+import { PayButton } from '@/components/shop/pay-button';
+import type { PaymentConfig } from '@/components/shop/pay-button';
 import { buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
 import { home } from '@/routes';
 import { index as ordersIndex } from '@/routes/orders';
 
 type Props = {
+    payment: PaymentConfig;
     checkout: {
         code: string;
         payment_status: 'pending' | 'paid' | 'expired';
@@ -46,7 +49,7 @@ const deadlineFormat = new Intl.DateTimeFormat('id-ID', {
     minute: '2-digit',
 });
 
-export default function CheckoutPlaced({ checkout }: Props) {
+export default function CheckoutPlaced({ checkout, payment }: Props) {
     const pending = checkout.payment_status === 'pending';
 
     return (
@@ -100,8 +103,10 @@ export default function CheckoutPlaced({ checkout }: Props) {
                         <p className="text-sm text-muted-foreground">
                             Stok sudah disimpan untuk Anda. Kalau belum dibayar
                             sampai batas waktu, pesanan dibatalkan otomatis.
-                            Pembayaran online sedang disiapkan.
                         </p>
+                        <div className="mt-2">
+                            <PayButton code={checkout.code} config={payment} />
+                        </div>
                     </section>
                 )}
 

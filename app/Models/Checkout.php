@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $shipping_total
  * @property int $grand_total
  * @property CarbonImmutable $expires_at
+ * @property string|null $payment_token Midtrans Snap token, created on the first "Bayar"
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */

@@ -40,6 +40,9 @@ Route::middleware('auth')->group(function () {
         ->middleware(['verified', 'throttle:10,1'])
         ->name('checkout.store');
     Route::get('checkout/{code}', [CheckoutController::class, 'placed'])->name('checkout.placed');
+    Route::post('checkout/{code}/bayar', [CheckoutController::class, 'pay'])
+        ->middleware('throttle:10,1')
+        ->name('checkout.pay');
     Route::get('pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');

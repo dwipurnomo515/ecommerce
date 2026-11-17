@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Payments\Midtrans;
+use App\Payments\PaymentGateway;
 use App\Shipping\RajaOngkir;
 use App\Shipping\ShippingProvider;
 use Carbon\CarbonImmutable;
@@ -25,6 +27,12 @@ class AppServiceProvider extends ServiceProvider
             key: config('services.rajaongkir.key'),
             baseUrl: config()->string('services.rajaongkir.base_url'),
             couriers: config()->string('services.rajaongkir.couriers'),
+        ));
+
+        $this->app->singleton(PaymentGateway::class, fn () => new Midtrans(
+            serverKey: config('services.midtrans.server_key'),
+            clientKey: config('services.midtrans.client_key'),
+            production: config()->boolean('services.midtrans.production'),
         ));
     }
 

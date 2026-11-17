@@ -10,6 +10,8 @@ use App\Models\Checkout;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
+use App\Payments\PaymentGateway;
+use App\Payments\StartPayment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -83,18 +85,39 @@ class CheckoutController extends Controller
     }
 
     /**
+     * "Bayar sekarang": the token comes back as flash data; the page opens
+     * the Midtrans popup when it arrives.
+     */
+    public function pay(Request $request, string $code, StartPayment $startPayment): RedirectResponse
+    {
+        $checkout = $this->own($request, $code);
+
+        Inertia::flash('payment', ['token' => $startPayment->handle($checkout)]);
+
+        return back();
+    }
+
+    /**
+     * Only its owner: another buyer's code is simply not found.
+     */
+    private function own(Request $request, string $code): Checkout
+    {
+        return Checkout::query()
+            ->where('code', $code)
+            ->where('user_id', $request->user()?->id)
+            ->firstOrFail();
+    }
+
+    /**
      * "Pesanan dibuat": what was ordered and what to pay before when.
      */
-    public function placed(Request $request, string $code): Response
+    public function placed(Request $request, string $code, PaymentGateway $gateway): Response
     {
-        $checkout = Checkout::query()
-            ->where('code', $code)
-            // Only its owner: another buyer's code is simply not found.
-            ->where('user_id', $request->user()?->id)
-            ->with(['orders.store:id,name', 'orders.items'])
-            ->firstOrFail();
+        $checkout = $this->own($request, $code)->load(['orders.store:id,name', 'orders.items']);
 
         return Inertia::render('shop/checkout-placed', [
+            // Public client key + snap.js URL (never the server key).
+            'payment' => $gateway->clientConfig(),
             'checkout' => [
                 'code' => $checkout->code,
                 'payment_status' => $checkout->payment_status->value,
