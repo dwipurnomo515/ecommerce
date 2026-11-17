@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\User;
 use App\Payments\Midtrans;
 use App\Payments\PaymentGateway;
+use App\Shipping\FlatRateShipping;
 use App\Shipping\RajaOngkir;
 use App\Shipping\ShippingProvider;
 use Carbon\CarbonImmutable;
@@ -23,11 +24,16 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         // The one place that decides which shipping service the app uses.
-        $this->app->singleton(ShippingProvider::class, fn () => new RajaOngkir(
-            key: config('services.rajaongkir.key'),
-            baseUrl: config()->string('services.rajaongkir.base_url'),
-            couriers: config()->string('services.rajaongkir.couriers'),
-        ));
+        // Local development without a RajaOngkir key gets the clearly
+        // labelled "Kurir Contoh"; tests and production always get the real
+        // client (tests fake its HTTP calls).
+        $this->app->singleton(ShippingProvider::class, fn () => $this->app->isLocal() && blank(config('services.rajaongkir.key'))
+            ? new FlatRateShipping
+            : new RajaOngkir(
+                key: config('services.rajaongkir.key'),
+                baseUrl: config()->string('services.rajaongkir.base_url'),
+                couriers: config()->string('services.rajaongkir.couriers'),
+            ));
 
         $this->app->singleton(PaymentGateway::class, fn () => new Midtrans(
             serverKey: config('services.midtrans.server_key'),
