@@ -9,7 +9,7 @@ import { home } from '@/routes';
 import { placed } from '@/routes/checkout';
 import type { Paginated } from '@/types/pagination';
 
-type PaymentStatus = 'pending' | 'paid' | 'expired';
+type PaymentStatus = 'pending' | 'paid' | 'expired' | 'needs_refund';
 
 type CheckoutRow = {
     code: string;
@@ -25,6 +25,7 @@ const statusTone: Record<PaymentStatus, string> = {
     pending: 'text-warning',
     paid: 'text-success',
     expired: 'text-muted-foreground',
+    needs_refund: 'text-destructive',
 };
 
 export default function Orders({

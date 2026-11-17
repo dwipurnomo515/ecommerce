@@ -17,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        // Payment providers call these from their servers: they have no
+        // session and no CSRF token. Each webhook proves who sent it with a
+        // signature instead (see HandlePaymentNotification).
+        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,

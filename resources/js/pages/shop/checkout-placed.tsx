@@ -1,17 +1,21 @@
 import { Head, Link } from '@inertiajs/react';
-import { CircleCheck, CircleX, Clock } from 'lucide-react';
+import { CircleAlert, CircleCheck, CircleX, Clock } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { PayButton } from '@/components/shop/pay-button';
 import type { PaymentConfig } from '@/components/shop/pay-button';
 import { buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
+import { cn } from '@/lib/utils';
 import { home } from '@/routes';
 import { index as ordersIndex } from '@/routes/orders';
+
+type PaymentStatus = 'pending' | 'paid' | 'expired' | 'needs_refund';
 
 type Props = {
     payment: PaymentConfig;
     checkout: {
         code: string;
-        payment_status: 'pending' | 'paid' | 'expired';
+        payment_status: PaymentStatus;
         payment_status_label: string;
         items_total: number;
         shipping_total: number;
@@ -49,8 +53,41 @@ const deadlineFormat = new Intl.DateTimeFormat('id-ID', {
     minute: '2-digit',
 });
 
+const headers: Record<
+    PaymentStatus,
+    { icon: LucideIcon; tone: string; title: string; body: string | null }
+> = {
+    pending: {
+        icon: CircleCheck,
+        tone: 'text-success',
+        title: 'Pesanan dibuat',
+        body: null,
+    },
+    paid: {
+        icon: CircleCheck,
+        tone: 'text-success',
+        title: 'Pembayaran diterima',
+        body: 'Terima kasih! Penjual akan segera memproses pesanan Anda.',
+    },
+    expired: {
+        icon: CircleX,
+        tone: 'text-muted-foreground',
+        title: 'Pesanan dibatalkan',
+        body: 'Pembayaran tidak diterima sebelum batas waktu atau gagal, jadi pesanan dibatalkan dan stoknya dikembalikan ke toko.',
+    },
+    needs_refund: {
+        icon: CircleAlert,
+        tone: 'text-destructive',
+        title: 'Pembayaran akan dikembalikan',
+        body: 'Pembayaran Anda diterima setelah pesanan dibatalkan. Tim Zetago akan mengembalikan dana Anda.',
+    },
+};
+
 export default function CheckoutPlaced({ checkout, payment }: Props) {
     const pending = checkout.payment_status === 'pending';
+    const head = headers[checkout.payment_status];
+    // JSX needs a capitalised name to treat it as a component.
+    const HeadIcon = head.icon;
 
     return (
         <>
@@ -58,26 +95,13 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
 
             <div className="mx-auto grid w-full max-w-2xl gap-8 px-4 py-8 md:px-6 md:py-12">
                 <header className="grid justify-items-start gap-3">
-                    {checkout.payment_status === 'expired' ? (
-                        <CircleX
-                            className="size-9 text-muted-foreground"
-                            aria-hidden
-                        />
-                    ) : (
-                        <CircleCheck
-                            className="size-9 text-success"
-                            aria-hidden
-                        />
-                    )}
+                    <HeadIcon className={cn('size-9', head.tone)} aria-hidden />
                     <h1 className="text-2xl font-semibold tracking-tight">
-                        {checkout.payment_status === 'expired'
-                            ? 'Pesanan dibatalkan'
-                            : 'Pesanan dibuat'}
+                        {head.title}
                     </h1>
-                    {checkout.payment_status === 'expired' && (
+                    {head.body && (
                         <p className="text-sm text-muted-foreground">
-                            Pembayaran tidak diterima sebelum batas waktu, jadi
-                            pesanan dibatalkan dan stoknya dikembalikan ke toko.
+                            {head.body}
                         </p>
                     )}
                     <p className="text-sm text-muted-foreground">

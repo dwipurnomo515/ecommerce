@@ -3,20 +3,24 @@
 namespace App\Enums;
 
 /**
- * Life of one store's order. Only the first and the cancelled state exist
- * in code for now; payment (Tahap 5) and fulfilment (Tahap 6) add the rest.
+ * Life of one store's order. Fulfilment states (diproses, dikirim,
+ * selesai) arrive in Tahap 6.
  */
 enum OrderStatus: string
 {
     case AwaitingPayment = 'awaiting_payment';
 
-    /** Not paid in time, or cancelled before payment. Stock was returned. */
+    /** Paid; waiting for the seller to process it. */
+    case Paid = 'paid';
+
+    /** Not paid in time, payment failed, or cancelled. Stock was returned. */
     case Cancelled = 'cancelled';
 
     public function label(): string
     {
         return match ($this) {
             self::AwaitingPayment => 'Menunggu pembayaran',
+            self::Paid => 'Dibayar',
             self::Cancelled => 'Dibatalkan',
         };
     }

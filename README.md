@@ -53,15 +53,28 @@ Setelah itu buka:
 
 ## Layanan pihak ketiga
 
-| Layanan                    | Untuk                                 | Variabel `.env`      |
-| -------------------------- | ------------------------------------- | -------------------- |
-| [Komerce RajaOngkir][rajo] | Pencarian wilayah (alamat) dan ongkir | `RAJAONGKIR_API_KEY` |
+| Layanan                    | Untuk                                 | Variabel `.env`                              |
+| -------------------------- | ------------------------------------- | -------------------------------------------- |
+| [Komerce RajaOngkir][rajo] | Pencarian wilayah (alamat) dan ongkir | `RAJAONGKIR_API_KEY`                         |
+| [Midtrans][mid] (sandbox)  | Pembayaran (Snap) + webhook           | `MIDTRANS_SERVER_KEY`, `MIDTRANS_CLIENT_KEY` |
 
-Tanpa API key, aplikasi tetap berjalan, tetapi pencarian wilayah menampilkan pesan "sedang tidak
+Tanpa API key, aplikasi tetap berjalan, tetapi fitur terkait menampilkan pesan "sedang tidak
 tersedia". Test **tidak pernah** memanggil API sungguhan (`Http::preventStrayRequests()` di
 `tests/TestCase.php`), jadi `composer test` tidak butuh key.
 
+**Webhook Midtrans saat development.** Midtrans perlu URL publik untuk memberi tahu pembayaran:
+
+```bash
+# Membuat URL publik sementara ke localhost:8000 (tanpa akun)
+docker run --rm cloudflare/cloudflared:latest tunnel --url http://host.docker.internal:8000
+# → https://acak-acak.trycloudflare.com
+```
+
+Isi `https://acak-acak.trycloudflare.com/webhooks/midtrans` di dashboard sandbox Midtrans:
+_Settings → Payment → Notification URL_. URL ini berubah setiap kali tunnel dijalankan ulang.
+
 [rajo]: https://collaborator.komerce.id
+[mid]: https://dashboard.sandbox.midtrans.com
 
 ## Perintah sehari-hari
 

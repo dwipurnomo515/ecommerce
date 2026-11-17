@@ -20,6 +20,14 @@ interface PaymentGateway
     public function createPaymentToken(Checkout $checkout): string;
 
     /**
+     * Checks that a webhook really comes from the provider and translates
+     * it. Null = the signature is wrong: treat it as forged.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function parseNotification(array $payload): ?PaymentNotification;
+
+    /**
      * Public key/config the browser needs (never secrets).
      *
      * @return array{client_key: string|null, snap_js: string}

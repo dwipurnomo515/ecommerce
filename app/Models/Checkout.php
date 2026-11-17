@@ -24,6 +24,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $grand_total
  * @property CarbonImmutable $expires_at
  * @property string|null $payment_token Midtrans Snap token, created on the first "Bayar"
+ * @property CarbonImmutable|null $paid_at
+ * @property string|null $payment_method
+ * @property string|null $payment_reference
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -59,6 +62,7 @@ class Checkout extends Model
             'shipping_total' => 'integer',
             'grand_total' => 'integer',
             'expires_at' => 'datetime',
+            'paid_at' => 'datetime',
         ];
     }
 }

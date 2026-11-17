@@ -74,6 +74,55 @@ class Midtrans implements PaymentGateway
     }
 
     /**
+     * https://docs.midtrans.com/docs/https-notification-webhooks
+     */
+    public function parseNotification(array $payload): ?PaymentNotification
+    {
+        if ($this->serverKey === null || $this->serverKey === '') {
+            return null;
+        }
+
+        $orderId = (string) ($payload['order_id'] ?? '');
+        $statusCode = (string) ($payload['status_code'] ?? '');
+        $grossAmount = (string) ($payload['gross_amount'] ?? '');
+        $signature = (string) ($payload['signature_key'] ?? '');
+
+        // Only Midtrans and we know the server key, so only Midtrans can
+        // produce this hash. Anyone can POST "settlement" to our URL; they
+        // just can't sign it.
+        $expected = hash('sha512', $orderId.$statusCode.$grossAmount.$this->serverKey);
+
+        // hash_equals: constant-time comparison. A normal === stops at the
+        // first different character, and measuring that time difference
+        // could leak the correct signature bit by bit (timing attack).
+        if ($signature === '' || ! hash_equals($expected, $signature)) {
+            return null;
+        }
+
+        $status = (string) ($payload['transaction_status'] ?? '');
+        $fraud = $payload['fraud_status'] ?? null;
+
+        $result = match (true) {
+            $status === 'settlement' => PaymentNotification::PAID,
+            // Cards: captured AND not flagged by fraud detection.
+            $status === 'capture' && ($fraud === null || $fraud === 'accept') => PaymentNotification::PAID,
+            in_array($status, ['deny', 'cancel', 'expire', 'failure'], true) => PaymentNotification::FAILED,
+            $status === 'pending' || $status === 'capture' => PaymentNotification::WAITING,
+            default => PaymentNotification::OTHER,
+        };
+
+        return new PaymentNotification(
+            orderId: $orderId,
+            result: $result,
+            // "118000.00": whole Rupiah for IDR.
+            amount: (int) round((float) $grossAmount),
+            method: isset($payload['payment_type']) ? (string) $payload['payment_type'] : null,
+            reference: isset($payload['transaction_id']) ? (string) $payload['transaction_id'] : null,
+            rawStatus: $status,
+        );
+    }
+
+    /**
      * @return array{client_key: string|null, snap_js: string}
      */
     public function clientConfig(): array

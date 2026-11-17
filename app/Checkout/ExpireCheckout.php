@@ -33,25 +33,35 @@ class ExpireCheckout
                 return false;
             }
 
-            $checkout->payment_status = PaymentStatus::Expired;
-            $checkout->save();
-
-            $orderIds = $checkout->orders()->pluck('id');
-            $checkout->orders()->update(['status' => OrderStatus::Cancelled]);
-
-            // Return stock per variant, locking in id order like PlaceOrder
-            // does (same order everywhere = no deadlocks between the two).
-            $returns = OrderItem::query()
-                ->whereIn('order_id', $orderIds)
-                ->selectRaw('product_variant_id, sum(quantity) as quantity')
-                ->groupBy('product_variant_id')
-                ->orderBy('product_variant_id')
-                ->pluck('quantity', 'product_variant_id');
-
-            ProductVariant::query()->whereKey($returns->keys())->orderBy('id')->lockForUpdate()->get()
-                ->each(fn (ProductVariant $v) => $v->increment('stock', (int) $returns[$v->id]));
+            $this->cancelLocked($checkout);
 
             return true;
         });
+    }
+
+    /**
+     * Cancels a pending checkout and returns its stock. The caller MUST
+     * hold the row lock on $checkout inside a transaction. Also used when
+     * the payment provider reports a failed payment.
+     */
+    public function cancelLocked(Checkout $checkout): void
+    {
+        $checkout->payment_status = PaymentStatus::Expired;
+        $checkout->save();
+
+        $orderIds = $checkout->orders()->pluck('id');
+        $checkout->orders()->update(['status' => OrderStatus::Cancelled]);
+
+        // Return stock per variant, locking in id order like PlaceOrder
+        // does (same order everywhere = no deadlocks between the two).
+        $returns = OrderItem::query()
+            ->whereIn('order_id', $orderIds)
+            ->selectRaw('product_variant_id, sum(quantity) as quantity')
+            ->groupBy('product_variant_id')
+            ->orderBy('product_variant_id')
+            ->pluck('quantity', 'product_variant_id');
+
+        ProductVariant::query()->whereKey($returns->keys())->orderBy('id')->lockForUpdate()->get()
+            ->each(fn (ProductVariant $v) => $v->increment('stock', (int) $returns[$v->id]));
     }
 }
