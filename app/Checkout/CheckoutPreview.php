@@ -68,6 +68,7 @@ class CheckoutPreview
                 'name' => $group['name'],
                 'slug' => $group['slug'],
                 'origin_city' => $store->origin_city,
+                'origin_destination_id' => $store->origin_destination_id,
                 'items' => $items,
                 'subtotal' => $group['subtotal'],
                 'weight' => $weight,

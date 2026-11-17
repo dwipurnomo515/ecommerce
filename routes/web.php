@@ -33,6 +33,12 @@ Route::middleware('auth')->group(function () {
 
     Route::get('keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::get('checkout', [CheckoutController::class, 'show'])->name('checkout.show');
+    // Placing orders sends money-related requests: verified accounts only,
+    // and a few per minute is plenty for a human.
+    Route::post('checkout', [CheckoutController::class, 'store'])
+        ->middleware(['verified', 'throttle:10,1'])
+        ->name('checkout.store');
+    Route::get('checkout/{code}', [CheckoutController::class, 'placed'])->name('checkout.placed');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
     Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');

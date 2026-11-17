@@ -1,6 +1,7 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 import { ChevronLeft, ImageOff, MapPin, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
+import CheckoutController from '@/actions/App/Http/Controllers/Shop/CheckoutController';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
     Dialog,
@@ -106,6 +107,36 @@ export default function Checkout({ checkout, addresses, addressId }: Props) {
     const costs = checkout.stores.map(shippingCost);
     const allShippable = costs.every((c) => c !== null);
     const shippingTotal = costs.reduce<number>((sum, c) => sum + (c ?? 0), 0);
+
+    const { errors } = usePage().props;
+    const [placing, setPlacing] = useState(false);
+    // One key per visit to this page: if the request is sent twice (double
+    // click, flaky network retry), the server recognises it and creates
+    // only ONE checkout.
+    const [idempotencyKey] = useState(() => crypto.randomUUID());
+
+    const place = () => {
+        if (!address || !allShippable) {
+            return;
+        }
+
+        router.post(
+            CheckoutController.store.url(),
+            {
+                address_id: address.id,
+                shipping: chosen,
+                idempotency_key: idempotencyKey,
+                // What the buyer is looking at. The server recalculates
+                // everything and refuses if its total differs.
+                expected_total: checkout.items_total + shippingTotal,
+            },
+            {
+                preserveScroll: true,
+                onStart: () => setPlacing(true),
+                onFinish: () => setPlacing(false),
+            },
+        );
+    };
 
     return (
         <>
@@ -218,6 +249,10 @@ export default function Checkout({ checkout, addresses, addressId }: Props) {
                 <Summary
                     itemsTotal={checkout.items_total}
                     shippingTotal={allShippable ? shippingTotal : null}
+                    canPlace={address !== null}
+                    placing={placing}
+                    error={errors.checkout}
+                    onPlace={place}
                 />
             </div>
 
@@ -344,10 +379,18 @@ function StoreParcel({
 function Summary({
     itemsTotal,
     shippingTotal,
+    canPlace,
+    placing,
+    error,
+    onPlace,
 }: {
     itemsTotal: number;
     /** null while some store has no shipping option chosen/available. */
     shippingTotal: number | null;
+    canPlace: boolean;
+    placing: boolean;
+    error: string | undefined;
+    onPlace: () => void;
 }) {
     const rows = (
         <dl className="grid gap-2 text-sm">
@@ -372,11 +415,22 @@ function Summary({
         </dl>
     );
 
-    // "Buat pesanan" arrives with the next step (orders + stock).
     const button = (
-        <Button size="lg" className="w-full" disabled>
-            Buat pesanan
-        </Button>
+        <>
+            {error && (
+                <p role="alert" className="text-sm text-destructive">
+                    {error}
+                </p>
+            )}
+            <Button
+                size="lg"
+                className="w-full"
+                disabled={shippingTotal === null || !canPlace || placing}
+                onClick={onPlace}
+            >
+                {placing ? 'Membuat pesanan…' : 'Buat pesanan'}
+            </Button>
+        </>
     );
 
     return (
@@ -385,6 +439,10 @@ function Summary({
                 <h2 className="font-semibold">Ringkasan</h2>
                 {rows}
                 {button}
+                <p className="text-xs text-muted-foreground">
+                    Stok disimpan untuk Anda selama 24 jam sampai pembayaran
+                    selesai.
+                </p>
             </aside>
             <div className="fixed inset-x-0 bottom-0 z-10 grid gap-3 border-t border-border bg-background px-4 py-3 lg:hidden">
                 {rows}

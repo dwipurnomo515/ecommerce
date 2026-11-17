@@ -1,0 +1,79 @@
+<?php
+
+namespace App\Models;
+
+use App\Enums\OrderStatus;
+use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+/**
+ * One store's part of a checkout: shipped as one parcel.
+ * Not fillable: written only by PlaceOrder and later status actions.
+ *
+ * @property int $id
+ * @property int $checkout_id
+ * @property int $user_id
+ * @property int $store_id
+ * @property string $number
+ * @property OrderStatus $status
+ * @property int $items_total
+ * @property int $shipping_cost
+ * @property string $courier
+ * @property string $courier_service
+ * @property string|null $shipping_etd
+ * @property int $weight_grams
+ * @property string $recipient_name
+ * @property string $phone
+ * @property string $street
+ * @property string|null $address_notes
+ * @property string $province
+ * @property string $city
+ * @property string $district
+ * @property string $subdistrict
+ * @property string $postal_code
+ * @property int $destination_id
+ * @property int $origin_destination_id
+ * @property CarbonImmutable|null $created_at
+ * @property CarbonImmutable|null $updated_at
+ */
+class Order extends Model
+{
+    /**
+     * @return BelongsTo<Checkout, $this>
+     */
+    public function checkout(): BelongsTo
+    {
+        return $this->belongsTo(Checkout::class);
+    }
+
+    /**
+     * @return BelongsTo<Store, $this>
+     */
+    public function store(): BelongsTo
+    {
+        return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * @return HasMany<OrderItem, $this>
+     */
+    public function items(): HasMany
+    {
+        return $this->hasMany(OrderItem::class)->orderBy('id');
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'status' => OrderStatus::class,
+            'items_total' => 'integer',
+            'shipping_cost' => 'integer',
+            'weight_grams' => 'integer',
+        ];
+    }
+}
