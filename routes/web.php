@@ -8,6 +8,7 @@ use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CatalogController;
+use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\DestinationController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use App\Http\Controllers\Shop\StoreController as ShopStoreController;
@@ -31,6 +32,7 @@ Route::middleware('auth')->group(function () {
         ->name('destinations.search');
 
     Route::get('keranjang', [CartController::class, 'index'])->name('cart.index');
+    Route::get('checkout', [CheckoutController::class, 'show'])->name('checkout.show');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
     Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');

@@ -8,6 +8,7 @@ import { Button, buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
+import { show as checkoutShow } from '@/routes/checkout';
 import { show as showStore } from '@/routes/shop/stores';
 
 type ItemStatus = 'ok' | 'unavailable' | 'sold_out' | 'not_enough';
@@ -305,10 +306,21 @@ function Summary({ cart }: { cart: Props['cart'] }) {
                     {formatRupiah(cart.total)}
                 </span>
             </div>
-            {/* Checkout is the next step of Tahap 4. */}
-            <Button size="lg" disabled className="w-full">
-                Lanjut ke checkout
-            </Button>
+            {cart.count > 0 ? (
+                <Link
+                    href={checkoutShow()}
+                    className={buttonVariants({
+                        size: 'lg',
+                        className: 'w-full',
+                    })}
+                >
+                    Lanjut ke checkout
+                </Link>
+            ) : (
+                <Button size="lg" disabled className="w-full">
+                    Lanjut ke checkout
+                </Button>
+            )}
         </>
     );
 
