@@ -3,6 +3,7 @@
 namespace Tests\Feature\Shop;
 
 use App\Models\User;
+use App\Shipping\Destination;
 use App\Shipping\ShippingProvider;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
@@ -53,17 +54,22 @@ class DestinationSearchTest extends TestCase
     {
         Http::fake([self::URL => Http::response($this->komerceResponse())]);
 
-        $this->search('Kebayoran')
+        $response = $this->search('Kebayoran')
             ->assertOk()
-            ->assertExactJson(['data' => [[
-                'id' => 17473,
-                'label' => 'KEBAYORAN BARU, JAKARTA SELATAN, DKI JAKARTA, 12120',
-                'province' => 'DKI JAKARTA',
-                'city' => 'JAKARTA SELATAN',
-                'district' => 'KEBAYORAN BARU',
-                'subdistrict' => 'SENAYAN',
-                'postal_code' => '12120',
-            ]]]);
+            ->assertJsonPath('data.0.label', 'KEBAYORAN BARU, JAKARTA SELATAN, DKI JAKARTA, 12120');
+
+        // The browser gets only a label and an opaque token; the full
+        // destination comes back out of the token on the server.
+        $this->assertSame(['label', 'token'], array_keys($response->json('data.0')));
+        $this->assertEquals([
+            'id' => 17473,
+            'label' => 'KEBAYORAN BARU, JAKARTA SELATAN, DKI JAKARTA, 12120',
+            'province' => 'DKI JAKARTA',
+            'city' => 'JAKARTA SELATAN',
+            'district' => 'KEBAYORAN BARU',
+            'subdistrict' => 'SENAYAN',
+            'postal_code' => '12120',
+        ], Destination::fromToken($response->json('data.0.token'))?->toArray());
 
         Http::assertSent(fn (Request $r) => $r->hasHeader('key', 'test-key')
             && $r['search'] === 'kebayoran');

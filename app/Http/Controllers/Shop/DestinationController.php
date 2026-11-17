@@ -37,7 +37,11 @@ class DestinationController extends Controller
         }
 
         return response()->json([
-            'data' => array_map(fn (Destination $d) => $d->toArray(), $destinations),
+            'data' => array_map(fn (Destination $d) => [
+                'label' => $d->label,
+                // The form sends this back; see Destination::token().
+                'token' => $d->token(),
+            ], $destinations),
         ]);
     }
 }

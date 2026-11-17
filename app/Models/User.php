@@ -64,6 +64,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     }
 
     /**
+     * Shipping addresses, the primary one first.
+     *
+     * @return HasMany<Address, $this>
+     */
+    public function addresses(): HasMany
+    {
+        return $this->hasMany(Address::class)->orderByDesc('is_primary')->orderByDesc('id');
+    }
+
+    /**
      * @return HasMany<CartItem, $this>
      */
     public function cartItems(): HasMany
