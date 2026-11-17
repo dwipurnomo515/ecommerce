@@ -12,6 +12,8 @@ declare module '@inertiajs/core' {
             name: string;
             auth: Auth;
             sidebarOpen: boolean;
+            /** Items in the buyer's cart (sum of quantities); 0 for guests. */
+            cartCount: number;
             [key: string]: unknown;
         };
     }

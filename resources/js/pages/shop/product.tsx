@@ -1,9 +1,10 @@
 import { Head, Link, useForm, usePage } from '@inertiajs/react';
-import { Minus, Plus, ShoppingBag } from 'lucide-react';
+import { ShoppingBag } from 'lucide-react';
 import { useState } from 'react';
 import CartController from '@/actions/App/Http/Controllers/Shop/CartController';
 import { Price } from '@/components/shop/price';
 import { ProductGallery } from '@/components/shop/product-gallery';
+import { QuantityStepper } from '@/components/shop/quantity-stepper';
 import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -255,6 +256,7 @@ export default function ProductPage({
                                     value={quantity}
                                     max={maxForVariant}
                                     onChange={setQuantity}
+                                    showLabel
                                 />
                             )}
                             <div className="hidden gap-2 md:grid">
@@ -331,53 +333,5 @@ export default function ProductPage({
                 {!isOwner && addButton('default')}
             </div>
         </>
-    );
-}
-
-function QuantityStepper({
-    value,
-    max,
-    onChange,
-}: {
-    value: number;
-    max: number;
-    onChange: (value: number) => void;
-}) {
-    return (
-        <div className="flex items-center gap-3">
-            <span className="text-sm text-muted-foreground" id="qty-label">
-                Jumlah
-            </span>
-            <div
-                role="group"
-                aria-labelledby="qty-label"
-                className="inline-flex h-10 items-center rounded-md border border-border"
-            >
-                <button
-                    type="button"
-                    onClick={() => onChange(value - 1)}
-                    disabled={value <= 1}
-                    aria-label="Kurangi"
-                    className="grid h-full w-10 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                >
-                    <Minus className="size-4" />
-                </button>
-                <span
-                    className="w-10 text-center text-sm font-medium tabular-nums"
-                    aria-live="polite"
-                >
-                    {value}
-                </span>
-                <button
-                    type="button"
-                    onClick={() => onChange(value + 1)}
-                    disabled={value >= max}
-                    aria-label="Tambah"
-                    className="grid h-full w-10 place-items-center text-muted-foreground hover:text-foreground disabled:opacity-40"
-                >
-                    <Plus className="size-4" />
-                </button>
-            </div>
-        </div>
     );
 }

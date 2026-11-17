@@ -23,7 +23,10 @@ Route::get('toko/{storeSlug}/{productSlug}', [ShopProductController::class, 'sho
 // Buying needs an account (the cart is stored per user).
 Route::middleware('auth')->group(function () {
     Route::get('toko/{storeSlug}/{productSlug}/beli', [CartController::class, 'loginToBuy'])->name('shop.products.login-to-buy');
+    Route::get('keranjang', [CartController::class, 'index'])->name('cart.index');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
+    Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
+    Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {

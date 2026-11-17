@@ -1,9 +1,12 @@
 import { Link, usePage } from '@inertiajs/react';
+import { ShoppingBag } from 'lucide-react';
 import type { ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import { SearchForm } from '@/components/shop/search-form';
 import { buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { dashboard, home, login, register } from '@/routes';
+import { index as cartIndex } from '@/routes/cart';
 
 /**
  * Public storefront frame: a quiet header so the product stays the focus.
@@ -11,7 +14,7 @@ import { dashboard, home, login, register } from '@/routes';
  * phones, where it is the main way to find things.
  */
 export default function ShopLayout({ children }: { children: ReactNode }) {
-    const { auth } = usePage().props;
+    const { auth, cartCount } = usePage().props;
     const { url } = usePage();
     // The layout stays mounted between pages; re-mount the search box when
     // the query in the URL changes so it shows the current search.
@@ -39,15 +42,35 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
 
                     <nav className="flex shrink-0 items-center gap-1">
                         {auth.user ? (
-                            <Link
-                                href={dashboard()}
-                                className={buttonVariants({
-                                    variant: 'ghost',
-                                    size: 'sm',
-                                })}
-                            >
-                                Akun saya
-                            </Link>
+                            <>
+                                <Link
+                                    href={cartIndex()}
+                                    className={cn(
+                                        buttonVariants({
+                                            variant: 'ghost',
+                                            size: 'icon',
+                                        }),
+                                        'relative',
+                                    )}
+                                    aria-label={`Keranjang, ${cartCount} barang`}
+                                >
+                                    <ShoppingBag className="size-5" />
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-0.5 -right-0.5 grid h-4.5 min-w-4.5 place-items-center rounded-full bg-primary px-1 text-[0.6875rem] leading-none font-semibold text-primary-foreground tabular-nums">
+                                            {cartCount > 99 ? '99+' : cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                                <Link
+                                    href={dashboard()}
+                                    className={buttonVariants({
+                                        variant: 'ghost',
+                                        size: 'sm',
+                                    })}
+                                >
+                                    Akun saya
+                                </Link>
+                            </>
                         ) : (
                             <>
                                 <Link

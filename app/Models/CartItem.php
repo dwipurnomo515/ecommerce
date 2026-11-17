@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $user_id
  * @property int $product_variant_id
  * @property int $quantity
+ * @property int|null $seen_price Only for "the price changed" notices, never for billing.
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -45,6 +46,7 @@ class CartItem extends Model
     {
         return [
             'quantity' => 'integer',
+            'seen_price' => 'integer',
         ];
     }
 }

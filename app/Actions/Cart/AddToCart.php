@@ -64,6 +64,8 @@ class AddToCart
             }
 
             $item->quantity = $total;
+            // The buyer just saw the product page at this price.
+            $item->seen_price = $variant->price;
             $item->save();
 
             return $item;

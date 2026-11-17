@@ -41,6 +41,11 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Badge in the shop header. A closure: only computed when the
+            // response is built, and skipped on partial reloads that don't ask for it.
+            'cartCount' => fn () => $request->user()
+                ? (int) $request->user()->cartItems()->sum('quantity')
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }
