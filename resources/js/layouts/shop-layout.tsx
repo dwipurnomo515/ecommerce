@@ -7,6 +7,7 @@ import { buttonVariants } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { dashboard, home, login, register } from '@/routes';
 import { index as cartIndex } from '@/routes/cart';
+import { index as ordersIndex } from '@/routes/orders';
 
 /**
  * Public storefront frame: a quiet header so the product stays the focus.
@@ -62,11 +63,25 @@ export default function ShopLayout({ children }: { children: ReactNode }) {
                                     )}
                                 </Link>
                                 <Link
-                                    href={dashboard()}
+                                    href={ordersIndex()}
                                     className={buttonVariants({
                                         variant: 'ghost',
                                         size: 'sm',
                                     })}
+                                >
+                                    Pesanan
+                                </Link>
+                                <Link
+                                    href={dashboard()}
+                                    className={cn(
+                                        buttonVariants({
+                                            variant: 'ghost',
+                                            size: 'sm',
+                                        }),
+                                        // Phones: room for cart + orders; the
+                                        // account is reachable from "Pesanan".
+                                        'hidden sm:inline-flex',
+                                    )}
                                 >
                                     Akun saya
                                 </Link>

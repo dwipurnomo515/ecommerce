@@ -1,8 +1,9 @@
 import { Head, Link } from '@inertiajs/react';
-import { CircleCheck, Clock } from 'lucide-react';
+import { CircleCheck, CircleX, Clock } from 'lucide-react';
 import { buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
 import { home } from '@/routes';
+import { index as ordersIndex } from '@/routes/orders';
 
 type Props = {
     checkout: {
@@ -54,10 +55,28 @@ export default function CheckoutPlaced({ checkout }: Props) {
 
             <div className="mx-auto grid w-full max-w-2xl gap-8 px-4 py-8 md:px-6 md:py-12">
                 <header className="grid justify-items-start gap-3">
-                    <CircleCheck className="size-9 text-success" aria-hidden />
+                    {checkout.payment_status === 'expired' ? (
+                        <CircleX
+                            className="size-9 text-muted-foreground"
+                            aria-hidden
+                        />
+                    ) : (
+                        <CircleCheck
+                            className="size-9 text-success"
+                            aria-hidden
+                        />
+                    )}
                     <h1 className="text-2xl font-semibold tracking-tight">
-                        Pesanan dibuat
+                        {checkout.payment_status === 'expired'
+                            ? 'Pesanan dibatalkan'
+                            : 'Pesanan dibuat'}
                     </h1>
+                    {checkout.payment_status === 'expired' && (
+                        <p className="text-sm text-muted-foreground">
+                            Pembayaran tidak diterima sebelum batas waktu, jadi
+                            pesanan dibatalkan dan stoknya dikembalikan ke toko.
+                        </p>
+                    )}
                     <p className="text-sm text-muted-foreground">
                         Nomor pesanan{' '}
                         <span className="font-semibold text-foreground tabular-nums">
@@ -181,6 +200,12 @@ export default function CheckoutPlaced({ checkout }: Props) {
                     })}
                 >
                     Lanjut belanja
+                </Link>
+                <Link
+                    href={ordersIndex()}
+                    className="justify-self-start text-sm text-primary underline-offset-2 hover:underline"
+                >
+                    Lihat semua pesanan
                 </Link>
             </div>
         </>

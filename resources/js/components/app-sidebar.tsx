@@ -6,6 +6,7 @@ import {
     LayoutGrid,
     Package,
     ShieldAlert,
+    ShoppingBag,
     Store,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -25,6 +26,7 @@ import { dashboard } from '@/routes';
 import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStores } from '@/routes/admin/stores';
+import { index as buyerOrders } from '@/routes/orders';
 import { index as sellerProducts } from '@/routes/seller/products';
 import { show as sellerStore } from '@/routes/seller/store';
 import type { NavItem } from '@/types';
@@ -34,6 +36,11 @@ const mainNavItems: NavItem[] = [
         title: 'Dashboard',
         href: dashboard(),
         icon: LayoutGrid,
+    },
+    {
+        title: 'Pesanan saya',
+        href: buyerOrders(),
+        icon: ShoppingBag,
     },
     {
         // Opens the store profile, or the "open a store" form if none yet

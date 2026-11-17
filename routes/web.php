@@ -10,6 +10,7 @@ use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CatalogController;
 use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\DestinationController;
+use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use App\Http\Controllers\Shop\StoreController as ShopStoreController;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,7 @@ Route::middleware('auth')->group(function () {
         ->middleware(['verified', 'throttle:10,1'])
         ->name('checkout.store');
     Route::get('checkout/{code}', [CheckoutController::class, 'placed'])->name('checkout.placed');
+    Route::get('pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
     Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');

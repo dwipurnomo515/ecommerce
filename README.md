@@ -84,6 +84,8 @@ docker compose exec app bash                 # masuk shell container
 - **app**: PHP-FPM + Nginx, melayani request web di port 8000
 - **vite**: dev server frontend dengan hot reload (port 5173)
 - **queue**: worker untuk job di background (kirim email, dll.)
+- **scheduler**: menjalankan tugas terjadwal (`routes/console.php`), misalnya membatalkan
+  pesanan yang tidak dibayar dalam 24 jam (`orders:expire`, setiap 5 menit)
 - **pgsql**: database utama, ditambah database `testing` untuk automated test
 - **redis**: cache, session, dan antrian job
 - **mailpit**: menangkap semua email keluar saat development

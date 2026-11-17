@@ -50,6 +50,14 @@ services:
         healthcheck:
             disable: true
 
+    # Runs routes/console.php schedules (e.g. orders:expire every 5 min).
+    scheduler:
+        <<: *app
+        command: ['php', '/var/www/html/artisan', 'schedule:work']
+        stop_signal: SIGTERM
+        healthcheck:
+            disable: true
+
     vite:
         <<: *app
         command: ['npm', 'run', 'dev']
