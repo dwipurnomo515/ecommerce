@@ -28,6 +28,15 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    // Shipping costs and the Indonesian region list (Komerce RajaOngkir).
+    // Get a key at https://collaborator.komerce.id. Never commit it.
+    'rajaongkir' => [
+        'key' => env('RAJAONGKIR_API_KEY'),
+        'base_url' => env('RAJAONGKIR_BASE_URL', 'https://rajaongkir.komerce.id/api/v1'),
+        // Couriers to ask prices for, colon separated, as the API expects.
+        'couriers' => env('RAJAONGKIR_COURIERS', 'jne:sicepat:jnt:pos'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Models\User;
+use App\Shipping\RajaOngkir;
+use App\Shipping\ShippingProvider;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Date;
@@ -18,7 +20,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // The one place that decides which shipping service the app uses.
+        $this->app->singleton(ShippingProvider::class, fn () => new RajaOngkir(
+            key: config('services.rajaongkir.key'),
+            baseUrl: config()->string('services.rajaongkir.base_url'),
+        ));
     }
 
     /**

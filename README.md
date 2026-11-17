@@ -51,6 +51,18 @@ Setelah itu buka:
 | http://localhost:8025 | Mailpit, kotak masuk email saat dev  |
 | `localhost:5432`      | PostgreSQL (user/pass: lihat `.env`) |
 
+## Layanan pihak ketiga
+
+| Layanan                    | Untuk                                 | Variabel `.env`      |
+| -------------------------- | ------------------------------------- | -------------------- |
+| [Komerce RajaOngkir][rajo] | Pencarian wilayah (alamat) dan ongkir | `RAJAONGKIR_API_KEY` |
+
+Tanpa API key, aplikasi tetap berjalan, tetapi pencarian wilayah menampilkan pesan "sedang tidak
+tersedia". Test **tidak pernah** memanggil API sungguhan (`Http::preventStrayRequests()` di
+`tests/TestCase.php`), jadi `composer test` tidak butuh key.
+
+[rajo]: https://collaborator.komerce.id
+
 ## Perintah sehari-hari
 
 Semua perintah PHP/Node dijalankan **di dalam container** `app`:

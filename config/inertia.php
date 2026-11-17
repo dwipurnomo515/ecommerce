@@ -16,7 +16,12 @@ return [
     */
 
     'ssr' => [
-        'enabled' => true,
+        // Off until SSR is actually set up (there is no resources/js/ssr.tsx
+        // yet). Left on, every full page load tried to reach an SSR server
+        // that doesn't exist, waited, then fell back to client rendering:
+        // slow pages, and in tests a hidden outgoing HTTP call. Worth
+        // turning on for SEO of product pages when deploying (Tahap 9).
+        'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
         'url' => 'http://127.0.0.1:13714',
         // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
 

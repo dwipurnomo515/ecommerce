@@ -3,6 +3,7 @@
 namespace Tests;
 
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
+use Illuminate\Support\Facades\Http;
 use Laravel\Fortify\Features;
 use RuntimeException;
 
@@ -28,6 +29,18 @@ abstract class TestCase extends BaseTestCase
         }
 
         return $app;
+    }
+
+    /**
+     * No test may reach a real outside service (shipping API, payments):
+     * that would be slow, flaky, use up quota, and leak test data. A test
+     * that forgets Http::fake() fails instead.
+     */
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::preventStrayRequests();
     }
 
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void
