@@ -8,21 +8,34 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 
 ## Daftar isi
 
-| Tahap | Topik                                | Status     |
-| ----- | ------------------------------------ | ---------- |
-| 1     | [Fondasi](01-fondasi.md)             | ✅ Selesai |
-| 2     | [Kualitas kode](02-kualitas-kode.md) | ✅ Selesai |
-| 3     | [Katalog produk](03-katalog.md)      | ✅ Selesai |
-| 4     | Keranjang, checkout per toko, ongkir | ⏳         |
-| 5     | Pembayaran (Midtrans)                | ⏳         |
-| 6     | Pesanan & ulasan                     | ⏳         |
-| 7     | Saldo penjual & pencairan dana       | ⏳         |
-| 8     | Hardening keamanan                   | ⏳         |
-| 9     | Production (Docker image, deploy)    | ⏳         |
+| Tahap | Topik                                                   | Status     |
+| ----- | ------------------------------------------------------- | ---------- |
+| 1     | [Fondasi](01-fondasi.md)                                | ✅ Selesai |
+| 2     | [Kualitas kode](02-kualitas-kode.md)                    | ✅ Selesai |
+| 3     | [Katalog produk](03-katalog.md)                         | ✅ Selesai |
+| 4     | [Keranjang, checkout, ongkir](04-keranjang-checkout.md) | ✅ Selesai |
+| 5     | Pembayaran (Midtrans)                                   | ⏳         |
+| 6     | Pesanan & ulasan                                        | ⏳         |
+| 7     | Saldo penjual & pencairan dana                          | ⏳         |
+| 8     | Hardening keamanan                                      | ⏳         |
+| 9     | Production (Docker image, deploy)                       | ⏳         |
 
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 4 (`git log --oneline 3453f8f..`):
+
+```
+238cc85 feat(orders): expire unpaid checkouts and buyer order list
+b606171 feat(checkout): place orders with frozen prices and safe stock
+70a15a0 feat(checkout): checkout preview with per-store shipping quotes
+4cdc7cb feat(shipping): store shipping origin and RajaOngkir cost quotes
+64db41e feat(addresses): buyer address book with region autocomplete
+ca1c751 feat(shipping): RajaOngkir destination search behind a ShippingProvider
+0f8696e feat(cart): cart page grouped per store with change warnings
+2eecd54 feat(cart): add to cart with server-side stock checks
+```
 
 Tahap 3 terdiri dari 24 commit (`git log --oneline 7158f66..`). Sorotannya:
 
@@ -71,3 +84,7 @@ Lihat detailnya dengan `git log --stat`.
    cepat atau lambat akan berbeda satu sama lain.
 8. **Jangan percaya apa pun dari browser:** isi form, nama file, angka di URL, `?sort=`. Validasi
    di klien hanya untuk kenyamanan, dan server selalu memeriksa ulang.
+9. **Browser memilih, server menghitung.** Di checkout, browser hanya mengirim pilihan, sedangkan
+   setiap rupiah dihitung ulang di server (lihat [Tahap 4](04-keranjang-checkout.md)).
+10. **Pertahanan berlapis untuk uang dan stok:** cek di kode, kunci baris, dan constraint database.
+    Mutation check membuktikan bahwa lapis terakhir tetap menahan walaupun lapis di atasnya hilang.
