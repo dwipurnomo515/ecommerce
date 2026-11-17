@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { CircleCheck, Clock, OctagonAlert } from 'lucide-react';
+import { CircleCheck, Clock, MapPin, OctagonAlert } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import StoreController from '@/actions/App/Http/Controllers/Seller/StoreController';
 import Heading from '@/components/heading';
@@ -19,6 +19,7 @@ type Props = {
         status: Status;
         status_label: string;
         approved_at: string | null;
+        origin_label: string | null;
     };
 };
 
@@ -77,6 +78,25 @@ export default function ShowStore({ store }: Props) {
                         )}
                     </div>
                 </div>
+
+                {!store.origin_label && (
+                    <div
+                        role="status"
+                        className="flex gap-3 rounded-lg border border-warning/30 p-4"
+                    >
+                        <MapPin
+                            className="mt-0.5 size-5 shrink-0 text-warning"
+                            aria-hidden
+                        />
+                        <p className="text-sm text-muted-foreground">
+                            <span className="font-semibold text-foreground">
+                                Isi "Dikirim dari" di bawah.
+                            </span>{' '}
+                            Tanpa itu ongkir tidak bisa dihitung, sehingga
+                            pembeli belum bisa checkout produk Anda.
+                        </p>
+                    </div>
+                )}
 
                 <Form
                     {...StoreController.update.form()}

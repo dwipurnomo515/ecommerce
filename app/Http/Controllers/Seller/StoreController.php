@@ -35,6 +35,7 @@ class StoreController extends Controller
                 'status' => $store->status->value,
                 'status_label' => $store->status->label(),
                 'approved_at' => $store->approved_at?->toIso8601String(),
+                'origin_label' => $store->origin_label,
             ],
         ]);
     }
@@ -53,7 +54,11 @@ class StoreController extends Controller
         try {
             // Creating through the relationship fills user_id for us; it is
             // deliberately not fillable, so the form cannot choose an owner.
-            $this->user($request)->store()->create($request->validated());
+            $store = $this->user($request)->store()->make($request->profile());
+            if ($origin = $request->origin()) {
+                $store->setShippingOrigin($origin);
+            }
+            $store->save();
         } catch (UniqueConstraintViolationException $e) {
             // Two possible races between validation and insert:
             // 1. Double submit: the unique index on stores.user_id stopped the
@@ -76,7 +81,11 @@ class StoreController extends Controller
         /** @var Store $store authorize() in the request guarantees it exists */
         $store = $this->user($request)->store;
 
-        $store->update($request->validated());
+        $store->fill($request->profile());
+        if ($origin = $request->origin()) {
+            $store->setShippingOrigin($origin);
+        }
+        $store->save();
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Profil toko disimpan.']);
 

@@ -16,7 +16,70 @@ class RajaOngkir implements ShippingProvider
     public function __construct(
         private readonly ?string $key,
         private readonly string $baseUrl,
+        /** Colon separated, e.g. "jne:sicepat:jnt". */
+        private readonly string $couriers = 'jne:sicepat:jnt:pos',
     ) {}
+
+    public function quote(int $originId, int $destinationId, int $grams): array
+    {
+        $grams = max(1, $grams);
+
+        // Prices change rarely within an hour, and the same cart is quoted
+        // again on every checkout page load: cache, and save quota.
+        /** @var list<array<string, mixed>> $rows */
+        $rows = Cache::remember(
+            "rajaongkir:cost:{$originId}:{$destinationId}:{$grams}:{$this->couriers}",
+            now()->addHour(),
+            fn () => $this->fetchCosts($originId, $destinationId, $grams),
+        );
+
+        $options = array_map(fn (array $row) => new ShippingOption(
+            courierCode: (string) $row['code'],
+            courierName: (string) ($row['name'] ?? $row['code']),
+            service: (string) $row['service'],
+            description: (string) ($row['description'] ?? ''),
+            cost: (int) $row['cost'],
+            etd: (string) ($row['etd'] ?? ''),
+        ), $rows);
+
+        usort($options, fn (ShippingOption $a, ShippingOption $b) => $a->cost <=> $b->cost);
+
+        return $options;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function fetchCosts(int $originId, int $destinationId, int $grams): array
+    {
+        try {
+            $response = $this->http()->asForm()->post('calculate/domestic-cost', [
+                'origin' => $originId,
+                'destination' => $destinationId,
+                'weight' => $grams,
+                'courier' => $this->couriers,
+            ]);
+        } catch (ConnectionException $e) {
+            throw new ShippingUnavailable('RajaOngkir unreachable: '.$e->getMessage(), previous: $e);
+        }
+
+        // The docs list 400 for "cost not found": no courier on this route.
+        // That is an answer (no options), not an outage.
+        if ($response->status() === 400) {
+            return [];
+        }
+
+        if ($response->failed()) {
+            throw new ShippingUnavailable("RajaOngkir cost failed: HTTP {$response->status()}");
+        }
+
+        /** @var list<array<string, mixed>> $rows */
+        $rows = $response->json('data') ?? [];
+
+        // A zero or missing price would let an order through with free
+        // shipping by accident. Drop such rows.
+        return array_values(array_filter($rows, fn (array $r) => isset($r['code'], $r['service']) && (int) ($r['cost'] ?? 0) > 0));
+    }
 
     public function searchDestinations(string $query): array
     {

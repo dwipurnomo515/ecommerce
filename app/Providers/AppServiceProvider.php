@@ -24,6 +24,7 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(ShippingProvider::class, fn () => new RajaOngkir(
             key: config('services.rajaongkir.key'),
             baseUrl: config()->string('services.rajaongkir.base_url'),
+            couriers: config()->string('services.rajaongkir.couriers'),
         ));
     }
 

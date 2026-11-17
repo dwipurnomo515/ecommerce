@@ -1,12 +1,21 @@
 import { useState } from 'react';
+import { DestinationPicker } from '@/components/address/destination-picker';
+import type { DestinationChoice } from '@/components/address/destination-picker';
 import InputError from '@/components/input-error';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { slugify } from '@/lib/slug';
 
 type Props = {
-    errors: Partial<Record<'name' | 'slug' | 'description', string>>;
-    defaults?: { name: string; slug: string; description: string | null };
+    errors: Partial<
+        Record<'name' | 'slug' | 'description' | 'origin_token', string>
+    >;
+    defaults?: {
+        name: string;
+        slug: string;
+        description: string | null;
+        origin_label?: string | null;
+    };
     /** False once the store is approved: its address is then frozen. */
     slugEditable: boolean;
 };
@@ -16,6 +25,7 @@ export function StoreProfileFields({ errors, defaults, slugEditable }: Props) {
     const [name, setName] = useState(defaults?.name ?? '');
     const [slug, setSlug] = useState(defaults?.slug ?? '');
     const previewSlug = slugify(slug) || slugify(name) || 'nama-toko';
+    const [origin, setOrigin] = useState<DestinationChoice | null>(null);
 
     return (
         <>
@@ -98,6 +108,27 @@ export function StoreProfileFields({ errors, defaults, slugEditable }: Props) {
                     className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm"
                 />
                 <InputError message={errors.description} />
+            </div>
+
+            <div className="grid gap-2">
+                <Label htmlFor="store-origin">Dikirim dari</Label>
+                <DestinationPicker
+                    inputId="store-origin"
+                    value={origin?.label ?? defaults?.origin_label ?? null}
+                    onChange={setOrigin}
+                    invalid={!!errors.origin_token}
+                />
+                {/* Only sent when changed; empty = keep the current origin. */}
+                <input
+                    type="hidden"
+                    name="origin_token"
+                    value={origin?.token ?? ''}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Kecamatan tempat paket Anda dikirim. Dipakai untuk
+                    menghitung ongkir, dan pembeli melihat kotanya.
+                </p>
+                <InputError message={errors.origin_token} />
             </div>
         </>
     );

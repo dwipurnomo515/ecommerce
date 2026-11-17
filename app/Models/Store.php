@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StoreStatus;
+use App\Shipping\Destination;
 use Carbon\CarbonImmutable;
 use Database\Factories\StoreFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -18,6 +19,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $slug
  * @property string|null $description
  * @property string|null $logo_path
+ * @property int|null $origin_destination_id RajaOngkir destination the store ships from
+ * @property string|null $origin_label
+ * @property string|null $origin_city
  * @property StoreStatus $status
  * @property CarbonImmutable|null $approved_at
  * @property CarbonImmutable|null $created_at
@@ -60,6 +64,23 @@ class Store extends Model
     public function isActive(): bool
     {
         return $this->status === StoreStatus::Active;
+    }
+
+    /** Without an origin, shipping can't be priced, so checkout must wait. */
+    public function hasShippingOrigin(): bool
+    {
+        return $this->origin_destination_id !== null;
+    }
+
+    /**
+     * Set only from a decrypted Destination token (see StoreProfileRequest),
+     * never from raw form fields, so the columns are not fillable.
+     */
+    public function setShippingOrigin(Destination $origin): void
+    {
+        $this->origin_destination_id = $origin->id;
+        $this->origin_label = $origin->label;
+        $this->origin_city = $origin->city;
     }
 
     /**

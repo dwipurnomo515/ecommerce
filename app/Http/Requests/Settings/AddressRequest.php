@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Settings;
 
+use App\Http\Requests\Concerns\ReadsDestinationToken;
 use App\Models\Address;
 use App\Shipping\Destination;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -10,7 +11,7 @@ use Illuminate\Validation\Validator;
 
 class AddressRequest extends FormRequest
 {
-    private ?Destination $destination = null;
+    use ReadsDestinationToken;
 
     public function authorize(): bool
     {
@@ -59,26 +60,16 @@ class AddressRequest extends FormRequest
     public function after(): array
     {
         return [
-            function (Validator $validator): void {
-                $token = $this->input('destination_token');
-
-                if (! is_string($token) || $token === '') {
-                    return;
-                }
-
-                $this->destination = Destination::fromToken($token);
-
-                if ($this->destination === null) {
-                    $validator->errors()->add('destination_token', 'Pilih kecamatan/kelurahan dari daftar saran.');
-                }
-            },
+            fn (Validator $validator) => $this->decodeDestinationToken(
+                $validator, 'destination_token', 'Pilih kecamatan/kelurahan dari daftar saran.',
+            ),
         ];
     }
 
     /** The chosen region, decrypted from its token; null = keep the current one. */
     public function destination(): ?Destination
     {
-        return $this->destination;
+        return $this->decodedDestination();
     }
 
     private function editing(): bool
