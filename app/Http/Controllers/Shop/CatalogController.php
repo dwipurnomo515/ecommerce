@@ -7,7 +7,9 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Support\Like;
 use App\Support\ProductCards;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +20,8 @@ use Inertia\Response;
 class CatalogController extends Controller
 {
     private const PER_PAGE = 24;
+
+    private const TYPO_THRESHOLD = 0.4;
 
     public function home(): Response
     {
@@ -67,19 +71,50 @@ class CatalogController extends Controller
     {
         // Same length cap as product names; longer input can't match anyway.
         $q = mb_substr(trim($request->string('q')->value()), 0, 200);
-        $sort = ProductCards::sortFrom($request);
+        // Search results are best ordered by how well they match; the
+        // other orders stay available.
+        $sort = in_array($request->string('sort')->value(), ['', 'relevan'], true) ? 'relevan' : ProductCards::sortFrom($request);
 
         return Inertia::render('shop/search', [
             'q' => $q,
             'sort' => $sort,
             // Nothing typed: no query at all, the page shows categories.
-            'products' => $q === '' ? null : ProductCards::query($sort)
-                ->where('name', 'ilike', Like::contains($q))
+            'products' => $q === '' ? null : $this->matching($q, $sort)
                 ->paginate(self::PER_PAGE)
                 ->withQueryString()
                 ->through(fn (Product $product) => ProductCards::toCard($product)),
             'categories' => $this->rootCategories(),
         ]);
+    }
+
+    /**
+     * Exact substring OR close enough (typos), both served by the trigram
+     * GIN index on products.name.
+     *
+     * @return Builder<Product>
+     */
+    private function matching(string $q, string $sort): Builder
+    {
+        // "<%" means "word similarity of the query inside the name is at
+        // least the threshold". The default (0.6) misses real typos like
+        // "kaoss polso" (0.54); unrelated names score ~0.1. Measured on
+        // our own data before picking 0.4. Session-level, constant value.
+        DB::statement('SET pg_trgm.word_similarity_threshold = '.self::TYPO_THRESHOLD);
+
+        $query = ProductCards::query($sort === 'relevan' ? 'terbaru' : $sort)
+            ->where(fn (Builder $w) => $w
+                ->where('products.name', 'ilike', Like::contains($q))
+                ->orWhereRaw('? <% products.name', [$q]));
+
+        if ($sort === 'relevan') {
+            // Best match first; newest wins a tie (and id keeps pages stable).
+            $query->reorder()
+                ->orderByRaw('word_similarity(?, products.name) desc', [$q])
+                ->orderByDesc('products.created_at')
+                ->orderByDesc('products.id');
+        }
+
+        return $query;
     }
 
     /**

@@ -1,9 +1,10 @@
 import { router, usePage } from '@inertiajs/react';
 import { useId } from 'react';
 
-export type Sort = 'terbaru' | 'termurah' | 'termahal';
+export type Sort = 'relevan' | 'terbaru' | 'termurah' | 'termahal';
 
 const labels: Record<Sort, string> = {
+    relevan: 'Paling relevan',
     terbaru: 'Terbaru',
     termurah: 'Harga terendah',
     termahal: 'Harga tertinggi',
@@ -12,17 +13,32 @@ const labels: Record<Sort, string> = {
 /**
  * Changes ?sort= in the current URL (keeping ?q=) and starts again at
  * page 1: page 3 of "terbaru" means nothing once sorted by price.
+ *
+ * The page's default order is left out of the URL (short links). On the
+ * search page the default is "relevan", so choosing "terbaru" there must
+ * be written out explicitly.
  */
-export function SortSelect({ value }: { value: Sort }) {
+export function SortSelect({
+    value,
+    defaultSort = 'terbaru',
+    withRelevance = false,
+}: {
+    value: Sort;
+    defaultSort?: Sort;
+    withRelevance?: boolean;
+}) {
     const { url } = usePage();
     const id = useId();
+    const options = (Object.keys(labels) as Sort[]).filter(
+        (s) => withRelevance || s !== 'relevan',
+    );
 
     const change = (sort: Sort) => {
         const next = new URL(url, window.location.origin);
         next.searchParams.delete('page');
 
-        if (sort === 'terbaru') {
-            next.searchParams.delete('sort'); // the default: keep URLs short
+        if (sort === defaultSort) {
+            next.searchParams.delete('sort');
         } else {
             next.searchParams.set('sort', sort);
         }
@@ -41,7 +57,7 @@ export function SortSelect({ value }: { value: Sort }) {
                 onChange={(e) => change(e.target.value as Sort)}
                 className="h-9 rounded-md border border-input bg-transparent px-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
             >
-                {(Object.keys(labels) as Sort[]).map((sort) => (
+                {options.map((sort) => (
                     <option key={sort} value={sort}>
                         {labels[sort]}
                     </option>

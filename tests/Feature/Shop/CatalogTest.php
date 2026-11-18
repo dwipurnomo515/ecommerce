@@ -181,11 +181,40 @@ class CatalogTest extends TestCase
 
     public function test_search_treats_wildcards_as_text(): void
     {
+        // "100%" finding "1000" is now intended (typo tolerance), so the
+        // escape is checked where it matters: a lone "%" must not become
+        // "match everything".
         $this->product('Diskon 100% Asli');
         $this->product('Diskon 1000 Asli');
+        $this->product('Topi Rimba');
 
-        $this->get(route('shop.search', ['q' => '100%']))
-            ->assertInertia(fn (Assert $page) => $page->where('products.total', 1));
+        $this->get(route('shop.search', ['q' => '%']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('products.total', 1)
+                ->where('products.data.0.name', 'Diskon 100% Asli'));
+    }
+
+    public function test_search_tolerates_typos_and_puts_the_best_match_first(): void
+    {
+        $this->product('Celana Kaos Olahraga', attributes: ['created_at' => now()]);
+        $this->product('Kaos Polos Hitam', attributes: ['created_at' => now()->subDay()]);
+        $this->product('Sepatu Lari Pria');
+
+        $this->get(route('shop.search', ['q' => 'kaoss polso']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'relevan')
+                ->where('products.total', 1)
+                ->where('products.data.0.name', 'Kaos Polos Hitam'));
+
+        // Both contain "kaos"; the closer match comes first, not the newer one.
+        $names = collect($this->get(route('shop.search', ['q' => 'kaos polos']))->inertiaProps('products.data'))->pluck('name')->all();
+        $this->assertSame('Kaos Polos Hitam', $names[0]);
+
+        // Other orders still work on search results.
+        $this->get(route('shop.search', ['q' => 'kaos', 'sort' => 'terbaru']))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('sort', 'terbaru')
+                ->where('products.data.0.name', 'Celana Kaos Olahraga'));
     }
 
     public function test_an_empty_search_runs_no_product_query(): void

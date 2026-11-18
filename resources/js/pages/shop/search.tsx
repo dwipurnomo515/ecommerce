@@ -50,7 +50,13 @@ export default function SearchPage({ q, sort, products, categories }: Props) {
                                     {products.total} produk
                                 </p>
                             </div>
-                            {products.total > 1 && <SortSelect value={sort} />}
+                            {products.total > 1 && (
+                                <SortSelect
+                                    value={sort}
+                                    defaultSort="relevan"
+                                    withRelevance
+                                />
+                            )}
                         </div>
 
                         <ProductGrid
