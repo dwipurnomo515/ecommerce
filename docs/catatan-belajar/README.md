@@ -15,7 +15,7 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 | 3     | [Katalog produk](03-katalog.md)                         | ✅ Selesai |
 | 4     | [Keranjang, checkout, ongkir](04-keranjang-checkout.md) | ✅ Selesai |
 | 5     | [Pembayaran (Midtrans)](05-pembayaran.md)               | ✅ Selesai |
-| 6     | Pesanan & ulasan                                        | ⏳         |
+| 6     | [Pesanan & ulasan](06-pesanan-ulasan.md)                | ✅ Selesai |
 | 7     | Saldo penjual & pencairan dana                          | ⏳         |
 | 8     | Hardening keamanan                                      | ⏳         |
 | 9     | Production (Docker image, deploy)                       | ⏳         |
@@ -23,6 +23,14 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 6:
+
+```
+2e505c9 feat(reviews): seller replies and store rating
+40e45c4 feat(reviews): buyers review completed purchases
+7680968 feat(orders): sellers process and ship orders, buyers confirm receipt
+```
 
 Tahap 5:
 
@@ -102,3 +110,5 @@ Lihat detailnya dengan `git log --stat`.
     [Tahap 5](05-pembayaran.md)).
 12. **Pesan bisa hilang.** Webhook yang tidak sampai tetap tersusul lewat rekonsiliasi. Kejadian
     nyatanya terjadi di tahap ini, dan ditangani dengan fitur, bukan dengan berharap.
+13. **Biarkan database yang menghitung.** `SET n = n + 1` tidak bisa kehilangan pembaruan,
+    sedangkan baca–hitung–tulis di PHP bisa (lihat [Tahap 6](06-pesanan-ulasan.md)).

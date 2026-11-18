@@ -7,6 +7,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Action class**             | Kelas kecil berisi satu aturan bisnis (`CreateProduct`, `ModerateProduct`), bisa dipakai dari controller atau job.         |
 | **APP_KEY**                  | Kunci rahasia Laravel untuk enkripsi (cookie, session). Jangan sampai bocor.                                               |
 | **Atomic lock**              | Kunci di cache (Redis) yang hanya bisa dipegang satu proses (`Cache::lock`), tanpa mengunci baris database.                |
+| **Backfill**                 | Mengisi kolom baru dari data lama saat migration (mis. total rating toko dari ulasan yang sudah ada).                      |
 | **Bind mount**               | Menghubungkan folder di komputer ke dalam container (`.:/var/www/html`). Perubahan langsung terlihat di kedua sisi.        |
 | **CHECK constraint**         | Aturan di database (`stock >= 0`) yang menolak data salah, walaupun validasi aplikasi terlewati.                           |
 | **CI**                       | _Continuous Integration_: pemeriksaan otomatis setiap kali kode di-push.                                                   |
@@ -16,6 +17,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Deadlock**                 | Dua transaksi saling menunggu kunci milik yang lain selamanya. Dicegah dengan selalu mengunci dalam urutan yang sama (id). |
 | **Debounce**                 | Menunggu sampai user berhenti mengetik sebentar sebelum mengirim request (autocomplete).                                   |
 | **Defense in depth**         | Pengamanan berlapis: kalau satu lapis gagal, lapis lain masih menahan.                                                     |
+| **Denormalisasi**            | Menyimpan hasil hitungan (total rating) agar cepat dibaca; wajib diperbarui di tempat yang sama dengan datanya.            |
 | **Dirty checking**           | Eloquent hanya menyimpan kolom yang berubah dibanding saat data dimuat.                                                    |
 | **Docker Compose**           | Tool untuk menjalankan banyak container sekaligus dari satu file (`compose.yaml`).                                         |
 | **Dockerfile**               | "Resep" untuk membuat image Docker.                                                                                        |
@@ -38,6 +40,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Lint**                     | Analisis kode untuk menemukan pola yang rawan bug atau melanggar aturan.                                                   |
 | **Lock file**                | `composer.lock` / `package-lock.json`: mencatat versi persis setiap library.                                               |
 | **lockForUpdate**            | Mengunci baris database sampai transaction selesai, supaya proses lain menunggu giliran.                                   |
+| **Lost update**              | Dua proses baca–hitung–tulis bersamaan; salah satu perubahan hilang. Dicegah dengan UPDATE atomik.                         |
 | **Magic bytes**              | Beberapa byte pertama file yang menunjukkan jenis aslinya, apa pun ekstensinya.                                            |
 | **Mass assignment**          | Mengisi banyak kolom sekaligus dari input. Kolom sensitif (`status`, `is_admin`) dibuat tidak fillable.                    |
 | **Migration**                | File yang mendeskripsikan struktur tabel database, tersimpan di Git.                                                       |
@@ -69,6 +72,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Soft delete**              | "Hapus" dengan mengisi `deleted_at`. Baris tetap ada, sehingga pesanan lama tidak rusak.                                   |
 | **SSR**                      | _Server-side rendering_: HTML halaman dibuat di server. Belum dipakai (dimatikan) di project ini.                          |
 | **Starter kit**              | Template project resmi Laravel, lengkap dengan auth dan frontend.                                                          |
+| **State machine**            | Daftar status dan perpindahan yang sah (`canTransitionTo`), sehingga langkah tidak bisa dilompati/dibalik.                 |
 | **Supply-chain attack**      | Serangan lewat library/tools pihak ketiga yang dipakai project.                                                            |
 | **Tie-breaker**              | Kunci urutan terakhir yang unik (`id`) supaya pagination tidak menampilkan baris ganda.                                    |
 | **Timing attack**            | Menebak rahasia dari perbedaan waktu pembandingan; dicegah dengan `hash_equals`.                                           |
