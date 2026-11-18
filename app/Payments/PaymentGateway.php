@@ -28,6 +28,14 @@ interface PaymentGateway
     public function parseNotification(array $payload): ?PaymentNotification;
 
     /**
+     * Asks the provider for the payment's current state, for when a webhook
+     * never arrived. Null = no payment was started for this order yet.
+     *
+     * @throws PaymentUnavailable
+     */
+    public function fetchStatus(string $orderId): ?PaymentNotification;
+
+    /**
      * Public key/config the browser needs (never secrets).
      *
      * @return array{client_key: string|null, snap_js: string}

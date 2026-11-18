@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\User;
 use App\Payments\PaymentGateway;
+use App\Payments\ReconcilePayment;
 use App\Payments\StartPayment;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -111,9 +112,16 @@ class CheckoutController extends Controller
     /**
      * "Pesanan dibuat": what was ordered and what to pay before when.
      */
-    public function placed(Request $request, string $code, PaymentGateway $gateway): Response
+    public function placed(Request $request, string $code, PaymentGateway $gateway, ReconcilePayment $reconcile): Response
     {
-        $checkout = $this->own($request, $code)->load(['orders.store:id,name', 'orders.items']);
+        $checkout = $this->own($request, $code);
+
+        // The buyer is looking at "Menunggu pembayaran" right after paying:
+        // if the webhook hasn't arrived (yet), ask Midtrans. At most every
+        // 30 s per checkout, so reloading the page can't flood the API.
+        $reconcile->handle($checkout);
+
+        $checkout->load(['orders.store:id,name', 'orders.items']);
 
         return Inertia::render('shop/checkout-placed', [
             // Public client key + snap.js URL (never the server key).

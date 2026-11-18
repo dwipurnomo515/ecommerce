@@ -99,6 +99,55 @@ class Midtrans implements PaymentGateway
             return null;
         }
 
+        return $this->translate($orderId, $payload);
+    }
+
+    /**
+     * Asks Midtrans directly: https://docs.midtrans.com/reference/get-transaction-status
+     * No signature check needed: WE made this HTTPS request, authenticated
+     * with our server key, so the answer can only come from Midtrans.
+     */
+    public function fetchStatus(string $orderId): ?PaymentNotification
+    {
+        if ($this->serverKey === null || $this->serverKey === '') {
+            throw new PaymentUnavailable('MIDTRANS_SERVER_KEY is not set.');
+        }
+
+        try {
+            $response = Http::baseUrl($this->production ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com')
+                ->withBasicAuth($this->serverKey, '')
+                ->acceptJson()
+                ->connectTimeout(3)
+                ->timeout(5)
+                ->get('v2/'.rawurlencode($orderId).'/status');
+        } catch (ConnectionException $e) {
+            throw new PaymentUnavailable('Midtrans unreachable: '.$e->getMessage(), previous: $e);
+        }
+
+        /** @var array<string, mixed> $body */
+        $body = $response->json() ?? [];
+
+        // "Transaction doesn't exist": the buyer opened the popup but never
+        // chose a payment method. Nothing to apply.
+        if (($body['status_code'] ?? null) === '404' || $response->status() === 404) {
+            return null;
+        }
+
+        if ($response->failed() || ! isset($body['transaction_status'])) {
+            throw new PaymentUnavailable("Midtrans status failed: HTTP {$response->status()}");
+        }
+
+        return $this->translate($orderId, $body);
+    }
+
+    /**
+     * Midtrans vocabulary → ours. Shared by webhooks and status checks.
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    private function translate(string $orderId, array $payload): PaymentNotification
+    {
+        $grossAmount = (string) ($payload['gross_amount'] ?? '0');
         $status = (string) ($payload['transaction_status'] ?? '');
         $fraud = $payload['fraud_status'] ?? null;
 

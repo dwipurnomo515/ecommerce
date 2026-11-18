@@ -62,16 +62,31 @@ Tanpa API key, aplikasi tetap berjalan, tetapi fitur terkait menampilkan pesan "
 tersedia". Test **tidak pernah** memanggil API sungguhan (`Http::preventStrayRequests()` di
 `tests/TestCase.php`), jadi `composer test` tidak butuh key.
 
-**Webhook Midtrans saat development.** Midtrans perlu URL publik untuk memberi tahu pembayaran:
+**Webhook Midtrans saat development.** Midtrans perlu URL publik untuk memberi tahu pembayaran.
+Disarankan **ngrok** (akun gratis mendapat satu domain tetap, jadi URL cukup diisi sekali):
 
 ```bash
-# Membuat URL publik sementara ke localhost:8000 (tanpa akun)
-docker run --rm cloudflare/cloudflared:latest tunnel --url http://host.docker.internal:8000
-# → https://acak-acak.trycloudflare.com
+# Ambil authtoken dan domain gratis Anda di dashboard.ngrok.com
+docker run --rm -it -e NGROK_AUTHTOKEN=<token-anda> ngrok/ngrok:latest \
+  http --url=<domain-anda>.ngrok-free.app host.docker.internal:8000
 ```
 
-Isi `https://acak-acak.trycloudflare.com/webhooks/midtrans` di dashboard sandbox Midtrans:
-_Settings → Payment → Notification URL_. URL ini berubah setiap kali tunnel dijalankan ulang.
+Alternatif tanpa akun (URL berubah setiap kali dijalankan ulang):
+`docker run --rm cloudflare/cloudflared:latest tunnel --url http://host.docker.internal:8000`
+
+Isi `https://<domain>/webhooks/midtrans` di dashboard sandbox Midtrans:
+_Settings → Payment → Notification URL_.
+
+Tombol **"Test notification URL"** di dashboard akan **gagal** (403): notifikasi uji itu tidak
+ditandatangani dengan server key Anda, dan aplikasi menolak semua notifikasi tanpa tanda tangan
+sah. Uji dengan pembayaran sungguhan lewat [simulator sandbox](https://simulator.sandbox.midtrans.com).
+
+Kalau webhook terlewat (tunnel mati, server down), status tetap tersusul: halaman pesanan dan
+`payments:sync` (setiap 10 menit) menanyakan status langsung ke Midtrans.
+
+**Data contoh lokal:** `docker compose exec app php artisan db:seed --class=DemoSeeder` membuat
+akun pembeli/penjual/admin (`@example.com`, password `password`), toko, produk, dan alamat contoh.
+Selama `RAJAONGKIR_API_KEY` kosong, ongkir di lokal memakai "Kurir Contoh".
 
 [rajo]: https://collaborator.komerce.id
 [mid]: https://dashboard.sandbox.midtrans.com

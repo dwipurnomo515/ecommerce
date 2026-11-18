@@ -13,3 +13,7 @@ Artisan::command('inspire', function () {
 // run is slow, the next one skips instead of piling up. (ExpireCheckout is
 // safe to repeat anyway; this just avoids wasted work.)
 Schedule::command('orders:expire')->everyFiveMinutes()->withoutOverlapping();
+
+// Safety net for lost payment webhooks: ask Midtrans about pending
+// checkouts that have a payment started.
+Schedule::command('payments:sync')->everyTenMinutes()->withoutOverlapping();

@@ -54,13 +54,25 @@ class HandlePaymentNotification
         $notification = $this->gateway->parseNotification($payload);
 
         if ($notification === null) {
-            $this->log($payload, null, self::BAD_SIGNATURE, signatureValid: false);
+            $this->log($payload, null, self::BAD_SIGNATURE, signatureValid: false, source: 'webhook');
             Log::warning('Payment webhook with an invalid signature', ['order_id' => $payload['order_id'] ?? null]);
 
             return self::BAD_SIGNATURE;
         }
 
-        return DB::transaction(function () use ($payload, $notification): string {
+        return $this->applyVerified($notification, $payload, 'webhook');
+    }
+
+    /**
+     * Applies news that is already known to come from the provider: a
+     * webhook whose signature checked out, or the answer to our own status
+     * request. Both go through exactly the same rules.
+     *
+     * @param  array<string, mixed>  $payload  raw data, for the audit log
+     */
+    public function applyVerified(PaymentNotification $notification, array $payload, string $source): string
+    {
+        return DB::transaction(function () use ($payload, $notification, $source): string {
             $checkout = Checkout::query()->where('code', $notification->orderId)->lockForUpdate()->first();
 
             $outcome = match (true) {
@@ -73,7 +85,7 @@ class HandlePaymentNotification
                 default => $this->apply($checkout, $notification),
             };
 
-            $this->log($payload, $checkout, $outcome, signatureValid: true);
+            $this->log($payload, $checkout, $outcome, signatureValid: true, source: $source);
 
             if ($outcome === self::AMOUNT_MISMATCH || $outcome === self::NEEDS_REFUND) {
                 Log::error("Payment needs attention: {$outcome}", ['order_id' => $notification->orderId]);
@@ -128,9 +140,10 @@ class HandlePaymentNotification
     /**
      * @param  array<string, mixed>  $payload
      */
-    private function log(array $payload, ?Checkout $checkout, string $outcome, bool $signatureValid): void
+    private function log(array $payload, ?Checkout $checkout, string $outcome, bool $signatureValid, string $source): void
     {
         DB::table('payment_notifications')->insert([
+            'source' => $source,
             'checkout_id' => $checkout?->id,
             'order_id' => mb_substr((string) ($payload['order_id'] ?? ''), 0, 50),
             'transaction_status' => isset($payload['transaction_status']) ? mb_substr((string) $payload['transaction_status'], 0, 30) : null,
