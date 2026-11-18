@@ -13,6 +13,7 @@ use App\Http\Controllers\Shop\CheckoutController;
 use App\Http\Controllers\Shop\DestinationController;
 use App\Http\Controllers\Shop\OrderController;
 use App\Http\Controllers\Shop\ProductController as ShopProductController;
+use App\Http\Controllers\Shop\ReviewController;
 use App\Http\Controllers\Shop\StoreController as ShopStoreController;
 use App\Http\Controllers\Webhooks\MidtransWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,9 @@ Route::middleware('auth')->group(function () {
         ->name('checkout.pay');
     Route::get('pesanan', [OrderController::class, 'index'])->name('orders.index');
     Route::post('pesanan/{order}/diterima', [OrderController::class, 'confirm'])->name('orders.confirm');
+    Route::post('ulasan/{item}', [ReviewController::class, 'store'])
+        ->middleware('throttle:20,1')
+        ->name('reviews.store');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
     Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');

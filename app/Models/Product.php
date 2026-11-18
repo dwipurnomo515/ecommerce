@@ -27,6 +27,8 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property list<array{name: string, values: list<string>}> $options In the seller's order; [] for a simple product.
  * @property ProductStatus $status
  * @property string|null $ban_reason Set only while banned; shown to the seller.
+ * @property int $rating_count Number of reviews (running total, see WriteReview)
+ * @property int $rating_sum Sum of all ratings; average = sum / count
  * @property CarbonImmutable|null $banned_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -54,6 +56,8 @@ class Product extends Model
     protected $attributes = [
         'status' => 'draft',
         'options' => '[]',
+        'rating_count' => 0,
+        'rating_sum' => 0,
     ];
 
     /**
@@ -102,6 +106,32 @@ class Product extends Model
     }
 
     /**
+     * @return HasMany<Review, $this>
+     */
+    public function reviews(): HasMany
+    {
+        return $this->hasMany(Review::class);
+    }
+
+    /**
+     * For the product card / page, or null when nobody reviewed it yet
+     * (no "0 stars" for a product that simply has no reviews).
+     *
+     * @return array{average: float, count: int}|null
+     */
+    public function ratingSummary(): ?array
+    {
+        if ($this->rating_count === 0) {
+            return null;
+        }
+
+        return [
+            'average' => round($this->rating_sum / $this->rating_count, 1),
+            'count' => $this->rating_count,
+        ];
+    }
+
+    /**
      * THE definition of "a buyer may see this product". Every storefront
      * query (detail page, listings, store page, search) goes through it, so
      * the rule can't drift between pages:
@@ -129,6 +159,8 @@ class Product extends Model
             'status' => ProductStatus::class,
             'options' => 'array',
             'banned_at' => 'datetime',
+            'rating_count' => 'integer',
+            'rating_sum' => 'integer',
         ];
     }
 }

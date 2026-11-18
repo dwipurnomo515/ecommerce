@@ -76,6 +76,8 @@ final class ProductCards
             'compareAtPrice' => $shown->compare_at_price,
             'inStock' => $shown->stock > 0,
             'store' => ['name' => $product->store->name],
+            // Null until someone reviews it: the card shows no stars at all.
+            'rating' => $product->ratingSummary(),
         ];
     }
 }

@@ -5,8 +5,10 @@ import CartController from '@/actions/App/Http/Controllers/Shop/CartController';
 import { Price } from '@/components/shop/price';
 import { ProductGallery } from '@/components/shop/product-gallery';
 import { QuantityStepper } from '@/components/shop/quantity-stepper';
+import { Stars } from '@/components/shop/stars';
 import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
 import { Button, buttonVariants } from '@/components/ui/button';
+import { formatDate } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import {
     choose,
@@ -39,6 +41,16 @@ type Props = {
     };
     isOwner: boolean;
     maxQuantity: number;
+    rating: { average: number; count: number } | null;
+    reviews: {
+        id: number;
+        author: string;
+        rating: number;
+        body: string | null;
+        variant: string | null;
+        created_at: string | null;
+        seller_reply: string | null;
+    }[];
 };
 
 const LOW_STOCK = 5;
@@ -49,6 +61,8 @@ export default function ProductPage({
     store,
     isOwner,
     maxQuantity,
+    rating,
+    reviews,
 }: Props) {
     const joined = joinedText(store.joined_at);
     const optionNames = product.options.map((o) => o.name);
@@ -149,6 +163,23 @@ export default function ProductPage({
                             </Link>
                         </p>
                     </div>
+
+                    {rating && (
+                        <a
+                            href="#ulasan"
+                            className="-mt-3 inline-flex w-fit items-center gap-1.5 text-sm"
+                        >
+                            <Stars value={rating.average} />
+                            <span className="font-semibold tabular-nums">
+                                {rating.average.toLocaleString('id-ID', {
+                                    minimumFractionDigits: 1,
+                                })}
+                            </span>
+                            <span className="text-muted-foreground underline-offset-2 hover:underline">
+                                ({rating.count} ulasan)
+                            </span>
+                        </a>
+                    )}
 
                     {price}
 
@@ -315,6 +346,57 @@ export default function ProductPage({
                             </p>
                         </section>
                     )}
+
+                    <section id="ulasan" className="grid scroll-mt-6 gap-4">
+                        <h2 className="font-semibold">
+                            Ulasan
+                            {rating && (
+                                <span className="font-normal text-muted-foreground">
+                                    {' '}
+                                    · {rating.count}
+                                </span>
+                            )}
+                        </h2>
+                        {reviews.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                Belum ada ulasan. Ulasan hanya bisa ditulis oleh
+                                pembeli yang pesanannya sudah selesai.
+                            </p>
+                        ) : (
+                            <ul className="grid gap-5">
+                                {reviews.map((r) => (
+                                    <li
+                                        key={r.id}
+                                        className="grid gap-1.5 text-sm"
+                                    >
+                                        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                            <Stars value={r.rating} />
+                                            <span className="font-medium">
+                                                {r.author}
+                                            </span>
+                                            <span className="text-xs text-muted-foreground">
+                                                {formatDate(r.created_at)}
+                                                {r.variant && ` · ${r.variant}`}
+                                            </span>
+                                        </div>
+                                        {r.body && (
+                                            <p className="leading-relaxed whitespace-pre-line">
+                                                {r.body}
+                                            </p>
+                                        )}
+                                        {r.seller_reply && (
+                                            <p className="rounded-md bg-muted/60 p-3 text-muted-foreground">
+                                                <span className="font-medium text-foreground">
+                                                    Balasan penjual:
+                                                </span>{' '}
+                                                {r.seller_reply}
+                                            </p>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </section>
                 </div>
             </div>
 

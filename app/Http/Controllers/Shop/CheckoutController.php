@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Reviews\WriteReview;
 use App\Checkout\CheckoutPreview;
 use App\Checkout\PlaceOrder;
 use App\Http\Controllers\Controller;
@@ -112,7 +113,7 @@ class CheckoutController extends Controller
     /**
      * "Pesanan dibuat": what was ordered and what to pay before when.
      */
-    public function placed(Request $request, string $code, PaymentGateway $gateway, ReconcilePayment $reconcile): Response
+    public function placed(Request $request, string $code, PaymentGateway $gateway, ReconcilePayment $reconcile, WriteReview $writeReview): Response
     {
         $checkout = $this->own($request, $code);
 
@@ -121,7 +122,9 @@ class CheckoutController extends Controller
         // 30 s per checkout, so reloading the page can't flood the API.
         $reconcile->handle($checkout);
 
-        $checkout->load(['orders.store:id,name', 'orders.items']);
+        $checkout->load(['orders.store:id,name', 'orders.items.review:id,order_item_id,rating', 'orders.items.order']);
+        /** @var User $user */
+        $user = $request->user();
 
         return Inertia::render('shop/checkout-placed', [
             // Public client key + snap.js URL (never the server key).
@@ -152,6 +155,9 @@ class CheckoutController extends Controller
                         'variant' => $i->variant_label,
                         'price' => $i->price,
                         'quantity' => $i->quantity,
+                        // The stars already given, or whether it can be reviewed now.
+                        'review_rating' => $i->review?->rating,
+                        'can_review' => $writeReview->refusal($user, $i) === null,
                     ]),
                 ]),
                 'address' => ($first = $checkout->orders->first()) ? [

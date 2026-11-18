@@ -5,6 +5,9 @@ import { useState } from 'react';
 import ShopOrderController from '@/actions/App/Http/Controllers/Shop/OrderController';
 import { PayButton } from '@/components/shop/pay-button';
 import type { PaymentConfig } from '@/components/shop/pay-button';
+import { ReviewDialog } from '@/components/shop/review-dialog';
+import type { ReviewTarget } from '@/components/shop/review-dialog';
+import { Stars } from '@/components/shop/stars';
 import { Button, buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -41,6 +44,8 @@ type Props = {
                 variant: string | null;
                 price: number;
                 quantity: number;
+                review_rating: number | null;
+                can_review: boolean;
             }[];
         }[];
         address: {
@@ -95,6 +100,7 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
     const head = headers[checkout.payment_status];
     // JSX needs a capitalised name to treat it as a component.
     const HeadIcon = head.icon;
+    const [reviewing, setReviewing] = useState<ReviewTarget | null>(null);
 
     return (
         <>
@@ -167,18 +173,40 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                                     key={item.id}
                                     className="flex justify-between gap-4"
                                 >
-                                    <span className="min-w-0">
-                                        {item.name}
-                                        {item.variant && (
+                                    <span className="grid min-w-0 justify-items-start gap-1">
+                                        <span>
+                                            {item.name}
+                                            {item.variant && (
+                                                <span className="text-muted-foreground">
+                                                    {' '}
+                                                    · {item.variant}
+                                                </span>
+                                            )}
                                             <span className="text-muted-foreground">
                                                 {' '}
-                                                · {item.variant}
+                                                × {item.quantity}
                                             </span>
-                                        )}
-                                        <span className="text-muted-foreground">
-                                            {' '}
-                                            × {item.quantity}
                                         </span>
+                                        {item.review_rating !== null ? (
+                                            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                                                Ulasan Anda{' '}
+                                                <Stars
+                                                    value={item.review_rating}
+                                                />
+                                            </span>
+                                        ) : (
+                                            item.can_review && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        setReviewing(item)
+                                                    }
+                                                >
+                                                    Beri ulasan
+                                                </Button>
+                                            )
+                                        )}
                                     </span>
                                     <span className="tabular-nums">
                                         {formatRupiah(
@@ -252,6 +280,8 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                     Lihat semua pesanan
                 </Link>
             </div>
+
+            <ReviewDialog item={reviewing} onClose={() => setReviewing(null)} />
         </>
     );
 }

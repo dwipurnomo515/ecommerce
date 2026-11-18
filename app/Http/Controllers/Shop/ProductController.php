@@ -8,6 +8,7 @@ use App\Models\Category;
 use App\Models\Product;
 use App\Models\ProductImage;
 use App\Models\ProductVariant;
+use App\Models\Review;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
@@ -67,6 +68,23 @@ class ProductController extends Controller
             // instead of buy buttons (AddToCart refuses it anyway).
             'isOwner' => $request->user()?->store?->id === $product->store_id,
             'maxQuantity' => CartItem::MAX_QUANTITY,
+            'rating' => $product->ratingSummary(),
+            // Newest first. Only a first name + initial is shown publicly.
+            'reviews' => $product->reviews()
+                ->with('user:id,name')
+                ->latest()
+                ->orderByDesc('id')
+                ->limit(10)
+                ->get()
+                ->map(fn (Review $r) => [
+                    'id' => $r->id,
+                    'author' => Review::publicName($r->user->name),
+                    'rating' => $r->rating,
+                    'body' => $r->body,
+                    'variant' => $r->variant_label,
+                    'created_at' => $r->created_at?->toIso8601String(),
+                    'seller_reply' => $r->seller_reply,
+                ]),
             'store' => [
                 'name' => $product->store->name,
                 'slug' => $product->store->slug,
