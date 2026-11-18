@@ -71,7 +71,7 @@ final class ProductCards
             'id' => $product->id,
             'name' => $product->name,
             'href' => route('shop.products.show', [$product->store->slug, $product->slug], absolute: false),
-            'imageUrl' => $product->images->first()?->url(),
+            'imageUrl' => $product->images->first()?->thumbUrl(),
             'price' => $shown->price,
             'compareAtPrice' => $shown->compare_at_price,
             'inStock' => $shown->stock > 0,

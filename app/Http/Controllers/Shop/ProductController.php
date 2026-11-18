@@ -53,6 +53,7 @@ class ProductController extends Controller
                 'images' => $product->images->map(fn (ProductImage $image) => [
                     'id' => $image->id,
                     'url' => $image->url(),
+                    'thumb_url' => $image->thumbUrl(),
                 ]),
                 // Only what a buyer needs. SKU and weight stay private.
                 'variants' => $product->activeVariants->map(fn (ProductVariant $variant) => [

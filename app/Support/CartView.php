@@ -96,7 +96,7 @@ final class CartView
             'name' => $product->name,
             // No link to a product buyers can't open (it would 404).
             'href' => $visible ? route('shop.products.show', [$product->store->slug, $product->slug], absolute: false) : null,
-            'imageUrl' => $product->images->first()?->url(),
+            'imageUrl' => $product->images->first()?->thumbUrl(),
             'variant' => self::label($variant, $product),
             'price' => $variant->price,
             'compareAtPrice' => $variant->compare_at_price,

@@ -31,7 +31,7 @@ type Props = {
         description: string | null;
         summary: string;
         options: { name: string; values: string[] }[];
-        images: { id: number; url: string }[];
+        images: { id: number; url: string; thumb_url: string }[];
         variants: BuyerVariant[];
     };
     categoryTrail: { id: number; name: string }[];

@@ -45,7 +45,7 @@ class ProductController extends Controller
             ->through(fn (Product $product) => [
                 'id' => $product->id,
                 'name' => $product->name,
-                'cover_url' => $product->images->first()?->url(),
+                'cover_url' => $product->images->first()?->thumbUrl(),
                 'category' => $product->category->name,
                 'status' => $product->status->value,
                 'status_label' => $product->status->label(),

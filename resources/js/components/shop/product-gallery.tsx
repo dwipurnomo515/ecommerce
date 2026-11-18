@@ -3,7 +3,7 @@ import { useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 type Props = {
-    images: { id: number; url: string }[];
+    images: { id: number; url: string; thumb_url: string }[];
     name: string;
 };
 
@@ -86,7 +86,7 @@ export function ProductGallery({ images, name }: Props) {
                                     )}
                                 >
                                     <img
-                                        src={image.url}
+                                        src={image.thumb_url}
                                         alt=""
                                         loading="lazy"
                                         className="size-full object-cover"

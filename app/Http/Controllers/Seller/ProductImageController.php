@@ -38,12 +38,13 @@ class ProductImageController extends Controller
         $nextOrder = (int) $product->images()->max('sort_order') + 1;
 
         foreach ($files as $file) {
-            // store() picks a RANDOM name (hashName) and the extension from
-            // the file content. The name the user's computer gave the file
-            // is never used: it could be "../../.env" or "<script>.jpg".
-            $path = $file->store("products/{$product->id}", ['disk' => config()->string('filesystems.media_disk')]);
+            // Re-encoded straight from PHP's temporary upload file: the
+            // original (with the phone's GPS position in its EXIF) is never
+            // written to our storage. Names are random; the name the user's
+            // computer gave the file ("../../.env", "<script>.jpg") is never used.
+            $paths = ProductImage::storeProcessed($file->getRealPath(), $product->id);
 
-            $product->images()->create(['path' => $path, 'sort_order' => $nextOrder++]);
+            $product->images()->create([...$paths, 'sort_order' => $nextOrder++]);
         }
 
         Inertia::flash('toast', ['type' => 'success', 'message' => count($files).' foto ditambahkan.']);
@@ -83,7 +84,7 @@ class ProductImageController extends Controller
         $image->delete();
         // Remove the file only after the row is gone. If this fails, the
         // leftover file is harmless; a row pointing to a missing file is not.
-        ProductImage::disk()->delete($image->path);
+        ProductImage::disk()->delete(array_filter([$image->path, $image->thumb_path]));
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Foto dihapus.']);
 
