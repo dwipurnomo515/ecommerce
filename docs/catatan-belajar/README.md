@@ -16,13 +16,21 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 | 4     | [Keranjang, checkout, ongkir](04-keranjang-checkout.md) | ✅ Selesai |
 | 5     | [Pembayaran (Midtrans)](05-pembayaran.md)               | ✅ Selesai |
 | 6     | [Pesanan & ulasan](06-pesanan-ulasan.md)                | ✅ Selesai |
-| 7     | Saldo penjual & pencairan dana                          | ⏳         |
+| 7     | [Saldo, pencairan & refund](07-saldo-pencairan.md)      | ✅ Selesai |
 | 8     | Hardening keamanan                                      | ⏳         |
 | 9     | Production (Docker image, deploy)                       | ⏳         |
 
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 7:
+
+```
+373e463 feat(refunds): seller cancels before shipping, buyers refunded automatically
+6eecbb8 feat(payouts): sellers withdraw balance through a simulated transfer
+2b996e6 feat(ledger): store balance credited on completed orders, minus commission
+```
 
 Tahap 6:
 
@@ -112,3 +120,7 @@ Lihat detailnya dengan `git log --stat`.
     nyatanya terjadi di tahap ini, dan ditangani dengan fitur, bukan dengan berharap.
 13. **Biarkan database yang menghitung.** `SET n = n + 1` tidak bisa kehilangan pembaruan,
     sedangkan baca–hitung–tulis di PHP bisa (lihat [Tahap 6](06-pesanan-ulasan.md)).
+14. **Uang: jangan pernah menimpa, selalu mencatat.** Buku besar _append-only_ menjawab "kenapa
+    saldo saya segini?" baris demi baris (lihat [Tahap 7](07-saldo-pencairan.md)).
+15. **Kalau tidak tahu, jangan menebak.** Transfer yang hasilnya tidak pasti tidak dikembalikan
+    otomatis, karena menebak salah bisa berarti membayar dua kali.

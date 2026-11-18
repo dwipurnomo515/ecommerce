@@ -5,9 +5,12 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | Istilah                      | Arti singkat                                                                                                               |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | **Action class**             | Kelas kecil berisi satu aturan bisnis (`CreateProduct`, `ModerateProduct`), bisa dipakai dari controller atau job.         |
+| **Append-only**              | Data yang hanya boleh ditambah, tidak diubah/dihapus (buku besar saldo); koreksi = baris baru yang berlawanan.             |
 | **APP_KEY**                  | Kunci rahasia Laravel untuk enkripsi (cookie, session). Jangan sampai bocor.                                               |
 | **Atomic lock**              | Kunci di cache (Redis) yang hanya bisa dipegang satu proses (`Cache::lock`), tanpa mengunci baris database.                |
 | **Backfill**                 | Mengisi kolom baru dari data lama saat migration (mis. total rating toko dari ulasan yang sudah ada).                      |
+| **Backoff**                  | Jeda yang makin panjang antar percobaan ulang (30 dtk, 1, 2, 5 menit) saat layanan luar gangguan.                          |
+| **Basis poin (bps)**         | Seperseratus persen: 500 bps = 5%. Membuat tarif tetap bilangan bulat.                                                     |
 | **Bind mount**               | Menghubungkan folder di komputer ke dalam container (`.:/var/www/html`). Perubahan langsung terlihat di kedua sisi.        |
 | **CHECK constraint**         | Aturan di database (`stock >= 0`) yang menolak data salah, walaupun validasi aplikasi terlewati.                           |
 | **CI**                       | _Continuous Integration_: pemeriksaan otomatis setiap kali kode di-push.                                                   |
@@ -23,6 +26,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Dockerfile**               | "Resep" untuk membuat image Docker.                                                                                        |
 | **Eager loading**            | Mengambil relasi sekaligus (`with([...])`) supaya tidak terjadi N+1 query.                                                 |
 | **Enum**                     | Tipe dengan pilihan nilai yang tetap (`ProductStatus::Active`), lebih aman daripada string bebas.                          |
+| **Escrow**                   | Uang pembeli ditahan marketplace sampai barang diterima, baru diteruskan ke penjual.                                       |
 | **EXIF**                     | Metadata di dalam foto (model kamera, waktu, **lokasi GPS**). Bisa membocorkan privasi.                                    |
 | **Exit code**                | Angka hasil program: `0` berarti berhasil, selain `0` berarti gagal.                                                       |
 | **Factory**                  | Pembuat data palsu untuk test (`Product::factory()->active()->create()`).                                                  |
@@ -35,8 +39,10 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Image**                    | Template read-only untuk membuat container (hasil build Dockerfile).                                                       |
 | **Inertia.js**               | Penghubung Laravel dan React: route & data di Laravel, tampilan di React, tanpa API terpisah.                              |
 | **Interface**                | Kontrak "apa yang bisa dilakukan" tanpa "bagaimana" (`ShippingProvider`), sehingga implementasinya bisa diganti.           |
+| **Job / queue**              | Pekerjaan lambat yang dikerjakan di latar belakang oleh worker (`ProcessPayout`), bukan saat request.                      |
 | **jsonb**                    | Kolom JSON di PostgreSQL. Bisa di-query, tapi **mengurutkan ulang key** objek.                                             |
 | **Lazy loading**             | Relasi diambil saat pertama diakses, sehingga satu query per baris. Dilarang di project ini lewat `shouldBeStrict`.        |
+| **Ledger (buku besar)**      | Catatan setiap perubahan saldo beserta saldo sesudahnya.                                                                   |
 | **Lint**                     | Analisis kode untuk menemukan pola yang rawan bug atau melanggar aturan.                                                   |
 | **Lock file**                | `composer.lock` / `package-lock.json`: mencatat versi persis setiap library.                                               |
 | **lockForUpdate**            | Mengunci baris database sampai transaction selesai, supaya proses lain menunggu giliran.                                   |
@@ -52,6 +58,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Overselling**              | Menjual lebih banyak dari stok yang ada. Dicegah dengan kunci baris + `CHECK (stock >= 0)`.                                |
 | **Partial index**            | Indeks yang hanya berlaku untuk sebagian baris (`... WHERE is_primary`).                                                   |
 | **Path traversal**           | Nama file seperti `../../.env` untuk keluar dari folder yang diizinkan.                                                    |
+| **Payout**                   | Pencairan saldo penjual ke rekening banknya.                                                                               |
 | **PHP-FPM**                  | Proses yang menjalankan kode PHP untuk setiap request web (di belakang Nginx).                                             |
 | **PHPStan / Larastan**       | Static analysis: mencari bug PHP tanpa menjalankan kode. Larastan = versi khusus Laravel.                                  |
 | **Pint**                     | Formatter kode PHP resmi Laravel.                                                                                          |
@@ -60,6 +67,7 @@ Istilah-istilah yang muncul selama membangun project, diurutkan berdasarkan abja
 | **Race condition**           | Dua proses berjalan bersamaan dan hasilnya bergantung pada siapa yang lebih dulu.                                          |
 | **Rate limit**               | Batas jumlah request per menit (`throttle:30,1`), melindungi kuota dan server.                                             |
 | **RefreshDatabase**          | Trait test Laravel yang membuat ulang semua tabel. Berbahaya kalau diarahkan ke database yang salah.                       |
+| **Refund**                   | Pengembalian dana ke pembeli.                                                                                              |
 | **Rekonsiliasi**             | Mencocokkan status kita dengan sumber aslinya (bertanya ke Midtrans) untuk menyusul pesan yang hilang.                     |
 | **Sandbox**                  | Lingkungan uji penyedia layanan (Midtrans) dengan uang tiruan.                                                             |
 | **Scaffold**                 | Membuat kerangka awal project dari template.                                                                               |
