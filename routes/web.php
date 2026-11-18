@@ -82,6 +82,7 @@ Route::middleware(['auth', 'verified'])
         Route::get('orders', [SellerOrderController::class, 'index'])->name('orders.index');
         Route::post('orders/{order}/process', [SellerOrderController::class, 'process'])->name('orders.process');
         Route::post('orders/{order}/ship', [SellerOrderController::class, 'ship'])->name('orders.ship');
+        Route::post('orders/{order}/cancel', [SellerOrderController::class, 'cancel'])->name('orders.cancel');
 
         Route::get('balance', [BalanceController::class, 'index'])->name('balance.index');
         Route::put('balance/account', [BalanceController::class, 'updateAccount'])->name('balance.account');

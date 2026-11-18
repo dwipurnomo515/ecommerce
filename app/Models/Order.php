@@ -7,6 +7,7 @@ use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 /**
  * One store's part of a checkout: shipped as one parcel.
@@ -40,6 +41,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property CarbonImmutable|null $processed_at
  * @property CarbonImmutable|null $shipped_at
  * @property CarbonImmutable|null $completed_at
+ * @property string|null $cancel_reason Set when the seller cancels after payment
+ * @property CarbonImmutable|null $cancelled_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -80,6 +83,14 @@ class Order extends Model
     }
 
     /**
+     * @return HasOne<Refund, $this>
+     */
+    public function refund(): HasOne
+    {
+        return $this->hasOne(Refund::class);
+    }
+
+    /**
      * @return HasMany<OrderItem, $this>
      */
     public function items(): HasMany
@@ -101,6 +112,7 @@ class Order extends Model
             'processed_at' => 'datetime',
             'shipped_at' => 'datetime',
             'completed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
         ];
     }
 }

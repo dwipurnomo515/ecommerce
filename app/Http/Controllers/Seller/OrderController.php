@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Seller;
 
+use App\Actions\Orders\CancelPaidOrder;
 use App\Actions\Orders\FulfilOrder;
 use App\Enums\OrderStatus;
 use App\Exceptions\InvalidStatusTransition;
@@ -113,6 +114,26 @@ class OrderController extends Controller
         return $this->attempt(
             fn () => $fulfil->ship($order, strtoupper($data['tracking_number'])),
             "Pesanan {$order->number} ditandai dikirim.",
+        );
+    }
+
+    /**
+     * "Batalkan pesanan" before it ships: stock back, buyer refunded.
+     */
+    public function cancel(Request $request, Order $order, CancelPaidOrder $cancel): RedirectResponse
+    {
+        Gate::authorize('fulfil', $order);
+
+        /** @var array{reason: string} $data */
+        $data = $request->validate(
+            // The buyer reads this: it must explain something.
+            ['reason' => ['required', 'string', 'min:10', 'max:300']],
+            attributes: ['reason' => 'alasan'],
+        );
+
+        return $this->attempt(
+            fn () => $cancel->handle($order, trim($data['reason'])),
+            "Pesanan {$order->number} dibatalkan. Dana pembeli dikembalikan.",
         );
     }
 

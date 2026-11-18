@@ -26,6 +26,7 @@ type Props = {
         shipping_total: number;
         grand_total: number;
         expires_at: string;
+        refund: RefundInfo | null;
         orders: {
             id: number;
             number: string;
@@ -35,6 +36,8 @@ type Props = {
             tracking_number: string | null;
             shipped_at: string | null;
             auto_complete_at: string | null;
+            cancel_reason: string | null;
+            refund: RefundInfo | null;
             courier: string;
             shipping_cost: number;
             items_total: number;
@@ -117,6 +120,7 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                             {head.body}
                         </p>
                     )}
+                    {checkout.refund && <RefundLine refund={checkout.refund} />}
                     <p className="text-sm text-muted-foreground">
                         Nomor pesanan{' '}
                         <span className="font-semibold text-foreground tabular-nums">
@@ -159,6 +163,21 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                                 {order.number} · {order.status_label}
                             </span>
                         </div>
+                        {order.cancel_reason && (
+                            <div className="grid gap-1 rounded-lg border border-border p-3 text-sm">
+                                <p>
+                                    <span className="font-medium">
+                                        Dibatalkan penjual:
+                                    </span>{' '}
+                                    <span className="text-muted-foreground">
+                                        {order.cancel_reason}
+                                    </span>
+                                </p>
+                                {order.refund && (
+                                    <RefundLine refund={order.refund} />
+                                )}
+                            </div>
+                        )}
                         {order.status === 'shipped' && (
                             <ShippedNotice
                                 orderId={order.id}
@@ -344,5 +363,16 @@ function ShippedNotice({
                 </Link>
             </div>
         </div>
+    );
+}
+
+type RefundInfo = { amount: number; label: string };
+
+function RefundLine({ refund }: { refund: RefundInfo }) {
+    return (
+        <p className="text-sm">
+            <span className="font-medium">{formatRupiah(refund.amount)}</span>{' '}
+            <span className="text-muted-foreground">· {refund.label}</span>
+        </p>
     );
 }

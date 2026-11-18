@@ -7,6 +7,8 @@ use App\Payments\Midtrans;
 use App\Payments\PaymentGateway;
 use App\Payouts\PayoutGateway;
 use App\Payouts\SimulatedPayoutGateway;
+use App\Refunds\RefundGateway;
+use App\Refunds\SimulatedRefundGateway;
 use App\Shipping\FlatRateShipping;
 use App\Shipping\RajaOngkir;
 use App\Shipping\ShippingProvider;
@@ -47,6 +49,14 @@ class AppServiceProvider extends ServiceProvider
             }
 
             return new SimulatedPayoutGateway;
+        });
+
+        $this->app->singleton(RefundGateway::class, function () {
+            if ($this->app->isProduction()) {
+                throw new RuntimeException('No real refund provider configured; the simulation is not allowed in production.');
+            }
+
+            return new SimulatedRefundGateway;
         });
 
         $this->app->singleton(PaymentGateway::class, fn () => new Midtrans(

@@ -62,8 +62,11 @@ enum OrderStatus: string
     public function canTransitionTo(self $next): bool
     {
         return match ($this) {
-            self::Paid => $next === self::Processing,
-            self::Processing => $next === self::Shipped,
+            // The seller may still cancel (with a refund) until it ships.
+            // After that the parcel is on its way: that's a dispute, not a
+            // cancellation.
+            self::Paid => $next === self::Processing || $next === self::Cancelled,
+            self::Processing => $next === self::Shipped || $next === self::Cancelled,
             self::Shipped => $next === self::Completed,
             default => false,
         };

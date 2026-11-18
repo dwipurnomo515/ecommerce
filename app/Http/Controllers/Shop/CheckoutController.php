@@ -10,6 +10,7 @@ use App\Models\Address;
 use App\Models\Checkout;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Models\Refund;
 use App\Models\User;
 use App\Payments\PaymentGateway;
 use App\Payments\ReconcilePayment;
@@ -122,7 +123,9 @@ class CheckoutController extends Controller
         // 30 s per checkout, so reloading the page can't flood the API.
         $reconcile->handle($checkout);
 
-        $checkout->load(['orders.store:id,name', 'orders.items.review:id,order_item_id,rating', 'orders.items.order']);
+        $checkout->load(['orders.store:id,name', 'orders.refund', 'orders.items.review:id,order_item_id,rating', 'orders.items.order']);
+        // A refund of the WHOLE checkout (paid after it was cancelled).
+        $checkoutRefund = Refund::query()->where('checkout_id', $checkout->id)->whereNull('order_id')->first();
         /** @var User $user */
         $user = $request->user();
 
@@ -137,6 +140,7 @@ class CheckoutController extends Controller
                 'shipping_total' => $checkout->shipping_total,
                 'grand_total' => $checkout->grand_total,
                 'expires_at' => $checkout->expires_at->toIso8601String(),
+                'refund' => $checkoutRefund ? ['amount' => $checkoutRefund->amount, 'label' => $checkoutRefund->label()] : null,
                 'orders' => $checkout->orders->map(fn (Order $o) => [
                     'id' => $o->id,
                     'number' => $o->number,
@@ -144,6 +148,8 @@ class CheckoutController extends Controller
                     'tracking_number' => $o->tracking_number,
                     'shipped_at' => $o->shipped_at?->toIso8601String(),
                     'auto_complete_at' => $o->shipped_at?->addDays(Order::AUTO_COMPLETE_DAYS)->toIso8601String(),
+                    'cancel_reason' => $o->cancel_reason,
+                    'refund' => $o->refund ? ['amount' => $o->refund->amount, 'label' => $o->refund->label()] : null,
                     'store' => $o->store->name,
                     'status_label' => $o->status->label(),
                     'courier' => strtoupper($o->courier).' '.$o->courier_service,

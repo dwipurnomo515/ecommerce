@@ -1,11 +1,21 @@
 import { Form, Head, Link } from '@inertiajs/react';
 import { Inbox } from 'lucide-react';
+import { useState } from 'react';
 import SellerOrderController from '@/actions/App/Http/Controllers/Seller/OrderController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
 import { SimplePagination } from '@/components/simple-pagination';
 import { Button, buttonVariants } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { formatDate } from '@/lib/date';
 import { formatRupiah } from '@/lib/money';
 import { cn } from '@/lib/utils';
@@ -208,7 +218,11 @@ function OrderCard({ order, status }: { order: SellerOrder; status: Status }) {
                 </section>
             </div>
 
-            <div className="border-t border-border pt-4">
+            <div className="grid gap-3 border-t border-border pt-4">
+                {(status === 'paid' || status === 'processing') && (
+                    <CancelOrder order={order} />
+                )}
+
                 {status === 'paid' && (
                     <Link
                         href={SellerOrderController.process(order.id)}
@@ -276,5 +290,82 @@ function OrderCard({ order, status }: { order: SellerOrder; status: Status }) {
                 )}
             </div>
         </li>
+    );
+}
+
+/**
+ * Cancel before shipping (e.g. out of stock after all). The reason is
+ * shown to the buyer; their money is refunded automatically.
+ */
+function CancelOrder({ order }: { order: SellerOrder }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setOpen(true)}
+                className="order-last justify-self-start text-muted-foreground hover:text-destructive"
+            >
+                Batalkan pesanan
+            </Button>
+            <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent>
+                    <Form
+                        {...SellerOrderController.cancel.form(order.id)}
+                        options={{ preserveScroll: true }}
+                        onSuccess={() => setOpen(false)}
+                        className="grid gap-5"
+                    >
+                        {({ processing, errors }) => (
+                            <>
+                                <div className="grid gap-1.5">
+                                    <DialogTitle>
+                                        Batalkan {order.number}?
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        Stok dikembalikan dan pembeli menerima
+                                        refund penuh (harga barang + ongkir).
+                                        Tidak bisa dibatalkan setelah dikirim.
+                                    </DialogDescription>
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor={`cancel-${order.id}`}>
+                                        Alasan untuk pembeli
+                                    </Label>
+                                    <textarea
+                                        id={`cancel-${order.id}`}
+                                        name="reason"
+                                        rows={3}
+                                        required
+                                        minLength={10}
+                                        maxLength={300}
+                                        aria-invalid={!!errors.reason}
+                                        placeholder="Contoh: Stok ukuran L ternyata habis, mohon maaf."
+                                        className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-base shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 aria-invalid:border-destructive md:text-sm"
+                                    />
+                                    <InputError message={errors.reason} />
+                                </div>
+                                <DialogFooter className="gap-2">
+                                    <DialogClose asChild>
+                                        <Button type="button" variant="outline">
+                                            Kembali
+                                        </Button>
+                                    </DialogClose>
+                                    <Button
+                                        type="submit"
+                                        variant="destructive"
+                                        disabled={processing}
+                                    >
+                                        Batalkan & refund
+                                    </Button>
+                                </DialogFooter>
+                            </>
+                        )}
+                    </Form>
+                </DialogContent>
+            </Dialog>
+        </>
     );
 }

@@ -6,6 +6,7 @@ use App\Checkout\ExpireCheckout;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Models\Checkout;
+use App\Refunds\RequestRefund;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -43,6 +44,7 @@ class HandlePaymentNotification
     public function __construct(
         private readonly PaymentGateway $gateway,
         private readonly ExpireCheckout $expire,
+        private readonly RequestRefund $requestRefund,
     ) {}
 
     /**
@@ -114,13 +116,16 @@ class HandlePaymentNotification
 
             if ($status === PaymentStatus::Expired) {
                 // Paid after we released the stock. Shipping it might mean
-                // selling stock that now belongs to someone else.
+                // selling stock that now belongs to someone else, so the
+                // money goes straight back.
                 $checkout->forceFill([
                     'payment_status' => PaymentStatus::NeedsRefund,
                     'paid_at' => now(),
                     'payment_method' => $n->method,
                     'payment_reference' => $n->reference,
                 ])->save();
+
+                $this->requestRefund->forCheckout($checkout, 'Pembayaran diterima setelah pesanan dibatalkan.');
 
                 return self::NEEDS_REFUND;
             }
