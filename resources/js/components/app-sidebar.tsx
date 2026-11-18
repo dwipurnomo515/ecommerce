@@ -10,6 +10,7 @@ import {
     ShieldAlert,
     ShoppingBag,
     Store,
+    Wallet,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
@@ -29,6 +30,7 @@ import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStores } from '@/routes/admin/stores';
 import { index as buyerOrders } from '@/routes/orders';
+import { index as sellerBalance } from '@/routes/seller/balance';
 import { index as sellerOrders } from '@/routes/seller/orders';
 import { index as sellerProducts } from '@/routes/seller/products';
 import { index as sellerReviews } from '@/routes/seller/reviews';
@@ -66,6 +68,11 @@ const mainNavItems: NavItem[] = [
         title: 'Ulasan',
         href: sellerReviews(),
         icon: MessageSquare,
+    },
+    {
+        title: 'Saldo',
+        href: sellerBalance(),
+        icon: Wallet,
     },
 ];
 

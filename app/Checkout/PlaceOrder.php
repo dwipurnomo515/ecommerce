@@ -158,6 +158,8 @@ class PlaceOrder
             'store_id' => $store['id'],
             'number' => "{$checkout->code}-{$n}",
             'status' => OrderStatus::AwaitingPayment,
+            // Frozen now: a later rate change never touches this order.
+            'commission_bps' => config()->integer('marketplace.commission_bps'),
             'items_total' => $store['subtotal'],
             'shipping_cost' => $option['cost'],
             'courier' => $option['courier'],

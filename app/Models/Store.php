@@ -26,6 +26,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property StoreStatus $status
  * @property int $rating_count Reviews of all its products (running total)
  * @property int $rating_sum
+ * @property int $balance Current money balance; changed only through Ledger::post()
  * @property CarbonImmutable|null $approved_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -48,6 +49,7 @@ class Store extends Model
         'status' => 'pending',
         'rating_count' => 0,
         'rating_sum' => 0,
+        'balance' => 0,
     ];
 
     /**
@@ -98,6 +100,7 @@ class Store extends Model
             'approved_at' => 'datetime',
             'rating_count' => 'integer',
             'rating_sum' => 'integer',
+            'balance' => 'integer',
         ];
     }
 }

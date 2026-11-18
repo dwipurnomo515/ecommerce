@@ -35,6 +35,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $postal_code
  * @property int $destination_id
  * @property int $origin_destination_id
+ * @property int $commission_bps Rate when placed, in basis points (500 = 5 %)
  * @property string|null $tracking_number
  * @property CarbonImmutable|null $processed_at
  * @property CarbonImmutable|null $shipped_at
@@ -46,6 +47,21 @@ class Order extends Model
 {
     /** Days a buyer has to confirm receipt before it completes by itself. */
     public const AUTO_COMPLETE_DAYS = 7;
+
+    /**
+     * Zetago's share of the item price, rounded DOWN: integer division,
+     * no floats. Any fraction of a Rupiah stays with the seller.
+     */
+    public function commission(): int
+    {
+        return intdiv($this->items_total * $this->commission_bps, 10_000);
+    }
+
+    /** What the store earns: items + shipping (it pays the courier) − commission. */
+    public function sellerEarning(): int
+    {
+        return $this->items_total + $this->shipping_cost - $this->commission();
+    }
 
     /**
      * @return BelongsTo<Checkout, $this>
@@ -80,6 +96,7 @@ class Order extends Model
             'status' => OrderStatus::class,
             'items_total' => 'integer',
             'shipping_cost' => 'integer',
+            'commission_bps' => 'integer',
             'weight_grams' => 'integer',
             'processed_at' => 'datetime',
             'shipped_at' => 'datetime',

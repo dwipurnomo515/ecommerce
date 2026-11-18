@@ -4,6 +4,7 @@ namespace App\Actions\Orders;
 
 use App\Enums\OrderStatus;
 use App\Exceptions\InvalidStatusTransition;
+use App\Ledger\Ledger;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
 
@@ -14,6 +15,8 @@ use Illuminate\Support\Facades\DB;
  */
 class FulfilOrder
 {
+    public function __construct(private readonly Ledger $ledger) {}
+
     /** Seller: "Proses pesanan". */
     public function process(Order $order): Order
     {
@@ -31,11 +34,22 @@ class FulfilOrder
         });
     }
 
-    /** Buyer: "Pesanan diterima" (or the auto-complete job). */
+    /**
+     * Buyer: "Pesanan diterima" (or the auto-complete job). The store is
+     * paid at this moment, not at payment: the money is held until the
+     * parcel is confirmed (escrow). Same transaction: completed AND
+     * credited, or neither.
+     */
     public function complete(Order $order): Order
     {
-        return $this->move($order, OrderStatus::Completed, function (Order $o): void {
-            $o->completed_at = now();
+        return DB::transaction(function () use ($order): Order {
+            $completed = $this->move($order, OrderStatus::Completed, function (Order $o): void {
+                $o->completed_at = now();
+            });
+
+            $this->ledger->creditCompletedOrder($completed);
+
+            return $completed;
         });
     }
 
