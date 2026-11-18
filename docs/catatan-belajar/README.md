@@ -14,7 +14,7 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 | 2     | [Kualitas kode](02-kualitas-kode.md)                    | ✅ Selesai |
 | 3     | [Katalog produk](03-katalog.md)                         | ✅ Selesai |
 | 4     | [Keranjang, checkout, ongkir](04-keranjang-checkout.md) | ✅ Selesai |
-| 5     | Pembayaran (Midtrans)                                   | ⏳         |
+| 5     | [Pembayaran (Midtrans)](05-pembayaran.md)               | ✅ Selesai |
 | 6     | Pesanan & ulasan                                        | ⏳         |
 | 7     | Saldo penjual & pencairan dana                          | ⏳         |
 | 8     | Hardening keamanan                                      | ⏳         |
@@ -23,6 +23,15 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 5:
+
+```
+07890c9 feat(payments): reconcile payments when a webhook is missed
+417101a feat(dev): demo data seeder and sample courier for local testing
+8c81377 feat(payments): Midtrans payment webhook
+f0b6116 feat(payments): pay with Midtrans Snap
+```
 
 Tahap 4 (`git log --oneline 3453f8f..`):
 
@@ -88,3 +97,8 @@ Lihat detailnya dengan `git log --stat`.
    setiap rupiah dihitung ulang di server (lihat [Tahap 4](04-keranjang-checkout.md)).
 10. **Pertahanan berlapis untuk uang dan stok:** cek di kode, kunci baris, dan constraint database.
     Mutation check membuktikan bahwa lapis terakhir tetap menahan walaupun lapis di atasnya hilang.
+11. **Percaya bukti, bukan klaim.** Status "lunas" hanya dari notifikasi bertanda tangan sah atau
+    dari jawaban API yang kita minta sendiri, tidak pernah dari browser (lihat
+    [Tahap 5](05-pembayaran.md)).
+12. **Pesan bisa hilang.** Webhook yang tidak sampai tetap tersusul lewat rekonsiliasi. Kejadian
+    nyatanya terjadi di tahap ini, dan ditangani dengan fitur, bukan dengan berharap.
