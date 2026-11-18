@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\ReviewController as AdminReviewController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\BalanceController;
 use App\Http\Controllers\Seller\OrderController as SellerOrderController;
@@ -118,6 +119,10 @@ Route::middleware(['auth', 'verified', 'can:admin'])
         Route::post('stores/{store}/suspend', [StoreController::class, 'suspend'])->name('stores.suspend');
 
         Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
+
+        Route::get('reviews', [AdminReviewController::class, 'index'])->name('reviews.index');
+        Route::post('reviews/{review}/hide', [AdminReviewController::class, 'hide'])->name('reviews.hide');
+        Route::post('reviews/{review}/show', [AdminReviewController::class, 'show'])->name('reviews.show');
 
         Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
         Route::post('finance/payouts/{payout}/retry', [FinanceController::class, 'retryPayout'])->name('finance.payouts.retry');

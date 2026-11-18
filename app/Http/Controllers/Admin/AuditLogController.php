@@ -18,6 +18,7 @@ class AuditLogController extends Controller
         'order' => 'Pesanan',
         'payout' => 'Penarikan',
         'refund' => 'Refund',
+        'review' => 'Ulasan',
         'user' => 'Admin',
     ];
 

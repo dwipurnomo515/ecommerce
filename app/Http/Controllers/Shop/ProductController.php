@@ -72,6 +72,7 @@ class ProductController extends Controller
             'rating' => $product->ratingSummary(),
             // Newest first. Only a first name + initial is shown publicly.
             'reviews' => $product->reviews()
+                ->whereNull('hidden_at') // hidden by an admin: not public
                 ->with('user:id,name')
                 ->latest()
                 ->orderByDesc('id')

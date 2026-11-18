@@ -20,6 +20,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string|null $variant_label
  * @property string|null $seller_reply
  * @property CarbonImmutable|null $replied_at
+ * @property CarbonImmutable|null $hidden_at Hidden by an admin: not shown, not counted
+ * @property string|null $hidden_reason
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
@@ -65,6 +67,7 @@ class Review extends Model
         return [
             'rating' => 'integer',
             'replied_at' => 'datetime',
+            'hidden_at' => 'datetime',
         ];
     }
 }

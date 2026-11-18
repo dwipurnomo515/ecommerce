@@ -28,7 +28,8 @@ class ReviewController extends Controller
 
         $reviews = Review::query()
             ->where('store_id', $store->id)
-            ->when($unanswered, fn ($q) => $q->whereNull('seller_reply'))
+            // A hidden review needs no answer: it isn't shown to anyone.
+            ->when($unanswered, fn ($q) => $q->whereNull('seller_reply')->whereNull('hidden_at'))
             ->with(['user:id,name', 'product:id,name'])
             ->latest()
             ->orderByDesc('id')
@@ -45,12 +46,14 @@ class ReviewController extends Controller
                 'created_at' => $r->created_at?->toIso8601String(),
                 'seller_reply' => $r->seller_reply,
                 'replied_at' => $r->replied_at?->toIso8601String(),
+                // The seller sees that (and why) a review was taken down.
+                'hidden_reason' => $r->hidden_at !== null ? $r->hidden_reason : null,
             ]);
 
         return Inertia::render('seller/reviews/index', [
             'reviews' => $reviews,
             'filter' => $unanswered ? 'belum-dibalas' : 'semua',
-            'unansweredCount' => Review::query()->where('store_id', $store->id)->whereNull('seller_reply')->count(),
+            'unansweredCount' => Review::query()->where('store_id', $store->id)->whereNull('seller_reply')->whereNull('hidden_at')->count(),
             'rating' => $store->ratingSummary(),
         ]);
     }

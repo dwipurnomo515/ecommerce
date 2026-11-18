@@ -23,6 +23,7 @@ type SellerReview = {
     created_at: string | null;
     seller_reply: string | null;
     replied_at: string | null;
+    hidden_reason: string | null;
 };
 
 type Props = {
@@ -142,7 +143,15 @@ export default function SellerReviews({
                                     </p>
                                 )}
 
-                                {r.seller_reply ? (
+                                {r.hidden_reason ? (
+                                    <p className="rounded-md border border-border p-3 text-muted-foreground">
+                                        <span className="font-medium text-foreground">
+                                            Disembunyikan admin:
+                                        </span>{' '}
+                                        {r.hidden_reason}. Ulasan ini tidak
+                                        tampil dan tidak dihitung di rating.
+                                    </p>
+                                ) : r.seller_reply ? (
                                     <p className="rounded-md bg-muted/60 p-3 text-muted-foreground">
                                         <span className="font-medium text-foreground">
                                             Balasan Anda ·{' '}
