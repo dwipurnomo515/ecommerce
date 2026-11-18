@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Ledger\Ledger;
+use App\Models\AuditLog;
 use App\Models\LedgerEntry;
 use App\Models\Payout;
 use App\Payouts\PayoutGateway;
@@ -55,12 +56,19 @@ class ProcessPayout implements ShouldQueue
                 $locked->reference = $result->reference;
                 $locked->save();
 
+                // Actor: the system (this runs in the queue worker).
+                AuditLog::record('payout.paid', $locked, "Payout #{$locked->id}",
+                    ['amount' => $locked->amount, 'reference' => $result->reference]);
+
                 return;
             }
 
             $locked->status = Payout::FAILED;
             $locked->failure_reason = $result->failureReason;
             $locked->save();
+
+            AuditLog::record('payout.failed', $locked, "Payout #{$locked->id}",
+                ['amount' => $locked->amount, 'reason' => $result->failureReason]);
 
             // The money comes back as a NEW, opposite line: history keeps
             // both the withdrawal and its reversal.

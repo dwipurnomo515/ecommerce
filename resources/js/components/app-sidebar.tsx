@@ -7,6 +7,7 @@ import {
     LayoutGrid,
     MessageSquare,
     Package,
+    ScrollText,
     ShieldAlert,
     ShoppingBag,
     Store,
@@ -26,6 +27,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as adminAudit } from '@/routes/admin/audit';
 import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStores } from '@/routes/admin/stores';
@@ -91,6 +93,11 @@ const adminNavItems: NavItem[] = [
         title: 'Produk',
         href: adminProducts(),
         icon: ShieldAlert,
+    },
+    {
+        title: 'Audit',
+        href: adminAudit(),
+        icon: ScrollText,
     },
 ];
 

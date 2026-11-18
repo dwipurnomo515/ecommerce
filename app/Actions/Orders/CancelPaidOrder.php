@@ -5,6 +5,7 @@ namespace App\Actions\Orders;
 use App\Checkout\ReturnStock;
 use App\Enums\OrderStatus;
 use App\Exceptions\InvalidStatusTransition;
+use App\Models\AuditLog;
 use App\Models\Order;
 use App\Refunds\RequestRefund;
 use Illuminate\Support\Facades\DB;
@@ -44,6 +45,11 @@ class CancelPaidOrder
 
             $this->returnStock->forOrders([$locked->id]);
             $this->requestRefund->forOrder($locked, "Dibatalkan penjual: {$reason}");
+
+            AuditLog::record('order.cancelled_by_seller', $locked, $locked->number, [
+                'reason' => $reason,
+                'refund' => $locked->items_total + $locked->shipping_cost,
+            ]);
 
             return $locked;
         });

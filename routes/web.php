@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StoreController;
@@ -114,6 +115,8 @@ Route::middleware(['auth', 'verified', 'can:admin'])
         Route::get('stores', [StoreController::class, 'index'])->name('stores.index');
         Route::post('stores/{store}/approve', [StoreController::class, 'approve'])->name('stores.approve');
         Route::post('stores/{store}/suspend', [StoreController::class, 'suspend'])->name('stores.suspend');
+
+        Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
 
         Route::get('products', [AdminProductController::class, 'index'])->name('products.index');
         Route::post('products/{product}/ban', [AdminProductController::class, 'ban'])->name('products.ban');

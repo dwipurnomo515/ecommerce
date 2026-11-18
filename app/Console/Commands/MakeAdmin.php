@@ -2,10 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Admin rights are granted from the server only, never through a web form,
@@ -26,8 +28,13 @@ class MakeAdmin extends Command
             return self::FAILURE;
         }
 
-        $user->is_admin = ! $this->option('revoke');
-        $user->save();
+        DB::transaction(function () use ($user): void {
+            $user->is_admin = ! $this->option('revoke');
+            $user->save();
+
+            // Admin rights are the keys to everything: always on record.
+            AuditLog::record($user->is_admin ? 'user.admin_granted' : 'user.admin_revoked', $user, $user->email);
+        });
 
         $this->info($user->is_admin
             ? "{$user->email} is now an admin."

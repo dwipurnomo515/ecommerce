@@ -4,6 +4,7 @@ namespace App\Payouts;
 
 use App\Jobs\ProcessPayout;
 use App\Ledger\Ledger;
+use App\Models\AuditLog;
 use App\Models\LedgerEntry;
 use App\Models\Payout;
 use App\Models\Store;
@@ -54,8 +55,14 @@ class RequestPayout
                 ])->save();
 
                 $bank = Payout::BANKS[$payout->bank] ?? strtoupper($payout->bank);
+                $destination = "{$bank} ".self::masked($payout->account_number);
                 $this->ledger->post($locked->id, null, LedgerEntry::PAYOUT, -$amount,
-                    "Penarikan ke {$bank} ".self::masked($payout->account_number), $payout);
+                    "Penarikan ke {$destination}", $payout);
+
+                AuditLog::record('payout.requested', $payout, $locked->name, [
+                    'amount' => $amount,
+                    'to' => $destination, // masked: the log never holds a full account number
+                ]);
 
                 // afterCommit: the job must never run for a payout that was
                 // rolled back (or before this transaction is visible).

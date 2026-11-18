@@ -4,6 +4,7 @@ namespace App\Actions\Products;
 
 use App\Enums\ProductStatus;
 use App\Exceptions\InvalidStatusTransition;
+use App\Models\AuditLog;
 use App\Models\Product;
 use Illuminate\Support\Facades\DB;
 
@@ -32,6 +33,8 @@ class ModerateProduct
             $locked->banned_at = now();
             $locked->save();
 
+            AuditLog::record('product.banned', $locked, $locked->name, ['reason' => $reason]);
+
             return $locked;
         });
     }
@@ -51,10 +54,16 @@ class ModerateProduct
                 throw InvalidStatusTransition::from($locked->status, ProductStatus::Draft);
             }
 
+            // The ban reason is cleared on the product, but kept in the log:
+            // "why was this banned last month?" stays answerable.
+            $previousReason = $locked->ban_reason;
+
             $locked->status = ProductStatus::Draft;
             $locked->ban_reason = null;
             $locked->banned_at = null;
             $locked->save();
+
+            AuditLog::record('product.unbanned', $locked, $locked->name, ['previous_reason' => $previousReason]);
 
             return $locked;
         });

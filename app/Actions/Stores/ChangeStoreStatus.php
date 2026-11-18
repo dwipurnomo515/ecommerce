@@ -4,6 +4,7 @@ namespace App\Actions\Stores;
 
 use App\Enums\StoreStatus;
 use App\Exceptions\InvalidStatusTransition;
+use App\Models\AuditLog;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 
@@ -30,6 +31,7 @@ class ChangeStoreStatus
                 throw InvalidStatusTransition::from($locked->status, $to);
             }
 
+            $from = $locked->status;
             $locked->status = $to;
 
             // Remember when the store was FIRST approved; reactivating a
@@ -39,6 +41,9 @@ class ChangeStoreStatus
             }
 
             $locked->save();
+
+            AuditLog::record($to === StoreStatus::Active ? 'store.approved' : 'store.suspended', $locked, $locked->name,
+                ['from' => $from->value, 'to' => $to->value]);
 
             return $locked;
         });

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Seller;
 
 use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
 use App\Models\LedgerEntry;
 use App\Models\Order;
 use App\Models\Payout;
@@ -97,12 +98,27 @@ class BalanceController extends Controller
             'bank' => 'bank', 'account_number' => 'nomor rekening', 'account_name' => 'nama pemilik rekening',
         ]);
 
-        // Not fillable on purpose: set here, from validated input only.
-        $store->forceFill([
-            'payout_bank' => $data['bank'],
-            'payout_account_number' => $data['account_number'],
-            'payout_account_name' => trim($data['account_name']),
-        ])->save();
+        $describe = fn (?string $bank, ?string $number, ?string $name) => $number === null
+            ? null
+            : (Payout::BANKS[$bank] ?? $bank).' '.RequestPayout::masked($number)." a.n. {$name}";
+
+        DB::transaction(function () use ($store, $data, $describe): void {
+            $before = $describe($store->payout_bank, $store->payout_account_number, $store->payout_account_name);
+
+            // Not fillable on purpose: set here, from validated input only.
+            $store->forceFill([
+                'payout_bank' => $data['bank'],
+                'payout_account_number' => $data['account_number'],
+                'payout_account_name' => trim($data['account_name']),
+            ])->save();
+
+            // A changed payout account is THE classic step of an account
+            // takeover ("send the money to me instead"): always on record.
+            AuditLog::record('store.bank_account_changed', $store, $store->name, [
+                'from' => $before,
+                'to' => $describe($store->payout_bank, $store->payout_account_number, $store->payout_account_name),
+            ]);
+        });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Rekening disimpan.']);
 
