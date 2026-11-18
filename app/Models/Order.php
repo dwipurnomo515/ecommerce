@@ -35,11 +35,18 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $postal_code
  * @property int $destination_id
  * @property int $origin_destination_id
+ * @property string|null $tracking_number
+ * @property CarbonImmutable|null $processed_at
+ * @property CarbonImmutable|null $shipped_at
+ * @property CarbonImmutable|null $completed_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  */
 class Order extends Model
 {
+    /** Days a buyer has to confirm receipt before it completes by itself. */
+    public const AUTO_COMPLETE_DAYS = 7;
+
     /**
      * @return BelongsTo<Checkout, $this>
      */
@@ -74,6 +81,9 @@ class Order extends Model
             'items_total' => 'integer',
             'shipping_cost' => 'integer',
             'weight_grams' => 'integer',
+            'processed_at' => 'datetime',
+            'shipped_at' => 'datetime',
+            'completed_at' => 'datetime',
         ];
     }
 }

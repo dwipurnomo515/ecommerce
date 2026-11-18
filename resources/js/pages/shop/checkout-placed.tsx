@@ -1,9 +1,11 @@
 import { Head, Link } from '@inertiajs/react';
 import { CircleAlert, CircleCheck, CircleX, Clock } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useState } from 'react';
+import ShopOrderController from '@/actions/App/Http/Controllers/Shop/OrderController';
 import { PayButton } from '@/components/shop/pay-button';
 import type { PaymentConfig } from '@/components/shop/pay-button';
-import { buttonVariants } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { formatRupiah } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { home } from '@/routes';
@@ -22,9 +24,14 @@ type Props = {
         grand_total: number;
         expires_at: string;
         orders: {
+            id: number;
             number: string;
             store: string;
+            status: string;
             status_label: string;
+            tracking_number: string | null;
+            shipped_at: string | null;
+            auto_complete_at: string | null;
             courier: string;
             shipping_cost: number;
             items_total: number;
@@ -146,6 +153,14 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                                 {order.number} · {order.status_label}
                             </span>
                         </div>
+                        {order.status === 'shipped' && (
+                            <ShippedNotice
+                                orderId={order.id}
+                                courier={order.courier}
+                                trackingNumber={order.tracking_number}
+                                autoCompleteAt={order.auto_complete_at}
+                            />
+                        )}
                         <ul className="grid gap-2 text-sm">
                             {order.items.map((item) => (
                                 <li
@@ -238,5 +253,66 @@ export default function CheckoutPlaced({ checkout, payment }: Props) {
                 </Link>
             </div>
         </>
+    );
+}
+
+const shortDate = new Intl.DateTimeFormat('id-ID', {
+    day: 'numeric',
+    month: 'long',
+});
+
+function ShippedNotice({
+    orderId,
+    courier,
+    trackingNumber,
+    autoCompleteAt,
+}: {
+    orderId: number;
+    courier: string;
+    trackingNumber: string | null;
+    autoCompleteAt: string | null;
+}) {
+    const [copied, setCopied] = useState(false);
+
+    return (
+        <div className="grid gap-3 rounded-lg bg-muted/60 p-4 text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <p>
+                    <span className="text-muted-foreground">
+                        Dikirim dengan {courier} · Resi{' '}
+                    </span>
+                    <span className="font-semibold tabular-nums">
+                        {trackingNumber}
+                    </span>
+                </p>
+                {trackingNumber && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            void navigator.clipboard.writeText(trackingNumber);
+                            setCopied(true);
+                        }}
+                    >
+                        {copied ? 'Tersalin' : 'Salin resi'}
+                    </Button>
+                )}
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-xs text-muted-foreground">
+                    Sudah sampai? Konfirmasi supaya penjual tahu.
+                    {autoCompleteAt &&
+                        ` Otomatis selesai ${shortDate.format(new Date(autoCompleteAt))}.`}
+                </p>
+                <Link
+                    href={ShopOrderController.confirm(orderId)}
+                    as="button"
+                    preserveScroll
+                    className={buttonVariants({ size: 'sm' })}
+                >
+                    Pesanan diterima
+                </Link>
+            </div>
+        </div>
     );
 }

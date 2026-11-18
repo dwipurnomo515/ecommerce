@@ -2,11 +2,15 @@
 
 namespace App\Http\Controllers\Shop;
 
+use App\Actions\Orders\FulfilOrder;
+use App\Exceptions\InvalidStatusTransition;
 use App\Http\Controllers\Controller;
 use App\Models\Checkout;
 use App\Models\Order;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -41,5 +45,22 @@ class OrderController extends Controller
             ]);
 
         return Inertia::render('shop/orders', ['checkouts' => $checkouts]);
+    }
+
+    /**
+     * "Pesanan diterima": the buyer confirms the parcel arrived.
+     */
+    public function confirm(Order $order, FulfilOrder $fulfil): RedirectResponse
+    {
+        Gate::authorize('confirmReceipt', $order);
+
+        try {
+            $fulfil->complete($order);
+            Inertia::flash('toast', ['type' => 'success', 'message' => 'Terima kasih! Pesanan ditandai selesai.']);
+        } catch (InvalidStatusTransition) {
+            Inertia::flash('toast', ['type' => 'error', 'message' => 'Pesanan ini belum dikirim atau sudah selesai.']);
+        }
+
+        return back();
     }
 }

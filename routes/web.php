@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StoreController;
+use App\Http\Controllers\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
@@ -49,6 +50,7 @@ Route::middleware('auth')->group(function () {
         ->middleware('throttle:10,1')
         ->name('checkout.pay');
     Route::get('pesanan', [OrderController::class, 'index'])->name('orders.index');
+    Route::post('pesanan/{order}/diterima', [OrderController::class, 'confirm'])->name('orders.confirm');
     Route::post('keranjang', [CartController::class, 'store'])->name('cart.store');
     Route::patch('keranjang/{item}', [CartController::class, 'update'])->whereNumber('item')->name('cart.update');
     Route::delete('keranjang/{item}', [CartController::class, 'destroy'])->whereNumber('item')->name('cart.destroy');
@@ -70,6 +72,10 @@ Route::middleware(['auth', 'verified'])
 
         Route::resource('products', SellerProductController::class)
             ->only(['index', 'create', 'store', 'edit', 'update']);
+
+        Route::get('orders', [SellerOrderController::class, 'index'])->name('orders.index');
+        Route::post('orders/{order}/process', [SellerOrderController::class, 'process'])->name('orders.process');
+        Route::post('orders/{order}/ship', [SellerOrderController::class, 'ship'])->name('orders.ship');
 
         // scopeBindings: /products/1/images/99 only resolves if image 99
         // really belongs to product 1 (otherwise 404).

@@ -3,6 +3,7 @@ import {
     BookOpen,
     FolderGit2,
     FolderTree,
+    Inbox,
     LayoutGrid,
     Package,
     ShieldAlert,
@@ -27,6 +28,7 @@ import { index as adminCategories } from '@/routes/admin/categories';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStores } from '@/routes/admin/stores';
 import { index as buyerOrders } from '@/routes/orders';
+import { index as sellerOrders } from '@/routes/seller/orders';
 import { index as sellerProducts } from '@/routes/seller/products';
 import { show as sellerStore } from '@/routes/seller/store';
 import type { NavItem } from '@/types';
@@ -52,6 +54,11 @@ const mainNavItems: NavItem[] = [
         title: 'Produk',
         href: sellerProducts(),
         icon: Package,
+    },
+    {
+        title: 'Pesanan masuk',
+        href: sellerOrders(),
+        icon: Inbox,
     },
 ];
 

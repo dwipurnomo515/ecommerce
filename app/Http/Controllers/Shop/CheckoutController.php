@@ -135,7 +135,12 @@ class CheckoutController extends Controller
                 'grand_total' => $checkout->grand_total,
                 'expires_at' => $checkout->expires_at->toIso8601String(),
                 'orders' => $checkout->orders->map(fn (Order $o) => [
+                    'id' => $o->id,
                     'number' => $o->number,
+                    'status' => $o->status->value,
+                    'tracking_number' => $o->tracking_number,
+                    'shipped_at' => $o->shipped_at?->toIso8601String(),
+                    'auto_complete_at' => $o->shipped_at?->addDays(Order::AUTO_COMPLETE_DAYS)->toIso8601String(),
                     'store' => $o->store->name,
                     'status_label' => $o->status->label(),
                     'courier' => strtoupper($o->courier).' '.$o->courier_service,

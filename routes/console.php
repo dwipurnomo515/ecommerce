@@ -17,3 +17,6 @@ Schedule::command('orders:expire')->everyFiveMinutes()->withoutOverlapping();
 // Safety net for lost payment webhooks: ask Midtrans about pending
 // checkouts that have a payment started.
 Schedule::command('payments:sync')->everyTenMinutes()->withoutOverlapping();
+
+// Shipped orders the buyer never confirmed complete after 7 days.
+Schedule::command('orders:auto-complete')->hourly()->withoutOverlapping();
