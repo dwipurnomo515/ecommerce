@@ -4,6 +4,7 @@ namespace App\Ledger;
 
 use App\Models\LedgerEntry;
 use App\Models\Order;
+use App\Models\Payout;
 use App\Models\Store;
 use Illuminate\Support\Facades\DB;
 
@@ -13,9 +14,9 @@ use Illuminate\Support\Facades\DB;
  */
 class Ledger
 {
-    public function post(int $storeId, ?Order $order, string $type, int $amount, string $description): LedgerEntry
+    public function post(int $storeId, ?Order $order, string $type, int $amount, string $description, ?Payout $payout = null): LedgerEntry
     {
-        return DB::transaction(function () use ($storeId, $order, $type, $amount, $description): LedgerEntry {
+        return DB::transaction(function () use ($storeId, $order, $type, $amount, $description, $payout): LedgerEntry {
             // Locked: two postings for the same store queue up, so each
             // "balance_after" is exact and the balance can't go negative
             // between a check and a write (payouts, next step).
@@ -27,6 +28,7 @@ class Ledger
             $entry->forceFill([
                 'store_id' => $storeId,
                 'order_id' => $order?->id,
+                'payout_id' => $payout?->id,
                 'type' => $type,
                 'amount' => $amount,
                 'balance_after' => $store->balance,

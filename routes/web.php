@@ -84,6 +84,10 @@ Route::middleware(['auth', 'verified'])
         Route::post('orders/{order}/ship', [SellerOrderController::class, 'ship'])->name('orders.ship');
 
         Route::get('balance', [BalanceController::class, 'index'])->name('balance.index');
+        Route::put('balance/account', [BalanceController::class, 'updateAccount'])->name('balance.account');
+        Route::post('balance/withdraw', [BalanceController::class, 'withdraw'])
+            ->middleware('throttle:5,1')
+            ->name('balance.withdraw');
 
         Route::get('reviews', [SellerReviewController::class, 'index'])->name('reviews.index');
         Route::post('reviews/{review}/reply', [SellerReviewController::class, 'reply'])->name('reviews.reply');

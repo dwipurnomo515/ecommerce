@@ -13,6 +13,7 @@ use LogicException;
  * @property int $id
  * @property int $store_id
  * @property int|null $order_id
+ * @property int|null $payout_id
  * @property string $type
  * @property int $amount Signed whole Rupiah
  * @property int $balance_after
@@ -24,6 +25,12 @@ class LedgerEntry extends Model
     public const ORDER_INCOME = 'order_income';
 
     public const COMMISSION = 'commission';
+
+    /** Money leaving for the store's bank account (negative). */
+    public const PAYOUT = 'payout';
+
+    /** A failed payout's money coming back (positive). */
+    public const PAYOUT_REVERSAL = 'payout_reversal';
 
     protected $table = 'store_ledger_entries';
 

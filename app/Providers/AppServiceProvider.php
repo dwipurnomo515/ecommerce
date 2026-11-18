@@ -5,6 +5,8 @@ namespace App\Providers;
 use App\Models\User;
 use App\Payments\Midtrans;
 use App\Payments\PaymentGateway;
+use App\Payouts\PayoutGateway;
+use App\Payouts\SimulatedPayoutGateway;
 use App\Shipping\FlatRateShipping;
 use App\Shipping\RajaOngkir;
 use App\Shipping\ShippingProvider;
@@ -15,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,6 +37,17 @@ class AppServiceProvider extends ServiceProvider
                 baseUrl: config()->string('services.rajaongkir.base_url'),
                 couriers: config()->string('services.rajaongkir.couriers'),
             ));
+
+        // Bank transfers to sellers: simulated until a real disbursement
+        // provider is set up. A simulation must never move "money" on a
+        // real server, so production refuses to start with it.
+        $this->app->singleton(PayoutGateway::class, function () {
+            if ($this->app->isProduction()) {
+                throw new RuntimeException('No real payout provider configured; the simulation is not allowed in production.');
+            }
+
+            return new SimulatedPayoutGateway;
+        });
 
         $this->app->singleton(PaymentGateway::class, fn () => new Midtrans(
             serverKey: config('services.midtrans.server_key'),

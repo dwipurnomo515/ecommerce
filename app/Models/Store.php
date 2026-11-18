@@ -27,6 +27,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $rating_count Reviews of all its products (running total)
  * @property int $rating_sum
  * @property int $balance Current money balance; changed only through Ledger::post()
+ * @property string|null $payout_bank
+ * @property string|null $payout_account_number
+ * @property string|null $payout_account_name
  * @property CarbonImmutable|null $approved_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
