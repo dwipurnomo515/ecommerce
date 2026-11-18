@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\FinanceController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\BalanceController;
@@ -117,6 +118,10 @@ Route::middleware(['auth', 'verified', 'can:admin'])
         Route::post('stores/{store}/suspend', [StoreController::class, 'suspend'])->name('stores.suspend');
 
         Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
+
+        Route::get('finance', [FinanceController::class, 'index'])->name('finance.index');
+        Route::post('finance/payouts/{payout}/retry', [FinanceController::class, 'retryPayout'])->name('finance.payouts.retry');
+        Route::post('finance/refunds/{refund}/retry', [FinanceController::class, 'retryRefund'])->name('finance.refunds.retry');
 
         Route::get('products', [AdminProductController::class, 'index'])->name('products.index');
         Route::post('products/{product}/ban', [AdminProductController::class, 'ban'])->name('products.ban');

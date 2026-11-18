@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Seller;
 
-use App\Enums\OrderStatus;
 use App\Http\Controllers\Controller;
 use App\Models\AuditLog;
 use App\Models\LedgerEntry;
@@ -39,8 +38,8 @@ class BalanceController extends Controller
         // integer division also rounds the commission down.
         $held = (int) Order::query()
             ->where('store_id', $store->id)
-            ->whereIn('status', [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped])
-            ->sum(DB::raw('items_total + shipping_cost - (items_total * commission_bps / 10000)'));
+            ->whereIn('status', Order::HELD_STATUSES)
+            ->sum(DB::raw(Order::SELLER_EARNING_SQL));
 
         $entries = LedgerEntry::query()
             ->where('store_id', $store->id)

@@ -67,6 +67,15 @@ class Order extends Model
     }
 
     /**
+     * sellerEarning() as SQL, for sums over many orders. Postgres integer
+     * division rounds the commission down exactly like intdiv() does.
+     */
+    public const SELLER_EARNING_SQL = 'items_total + shipping_cost - (items_total * commission_bps / 10000)';
+
+    /** Paid but not completed: money held for the store (escrow). */
+    public const HELD_STATUSES = [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped];
+
+    /**
      * @return BelongsTo<Checkout, $this>
      */
     public function checkout(): BelongsTo

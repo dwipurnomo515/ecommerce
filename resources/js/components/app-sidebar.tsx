@@ -4,6 +4,7 @@ import {
     FolderGit2,
     FolderTree,
     Inbox,
+    Landmark,
     LayoutGrid,
     MessageSquare,
     Package,
@@ -29,6 +30,7 @@ import {
 import { dashboard } from '@/routes';
 import { index as adminAudit } from '@/routes/admin/audit';
 import { index as adminCategories } from '@/routes/admin/categories';
+import { index as adminFinance } from '@/routes/admin/finance';
 import { index as adminProducts } from '@/routes/admin/products';
 import { index as adminStores } from '@/routes/admin/stores';
 import { index as buyerOrders } from '@/routes/orders';
@@ -93,6 +95,11 @@ const adminNavItems: NavItem[] = [
         title: 'Produk',
         href: adminProducts(),
         icon: ShieldAlert,
+    },
+    {
+        title: 'Keuangan',
+        href: adminFinance(),
+        icon: Landmark,
     },
     {
         title: 'Audit',

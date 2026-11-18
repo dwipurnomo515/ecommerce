@@ -33,6 +33,8 @@ class AuditLog extends Model
         'payout.requested' => 'Mengajukan penarikan',
         'payout.paid' => 'Penarikan berhasil',
         'payout.failed' => 'Penarikan gagal',
+        'payout.retried' => 'Mencoba ulang penarikan',
+        'refund.retried' => 'Mencoba ulang refund',
         'user.admin_granted' => 'Memberi hak admin',
         'user.admin_revoked' => 'Mencabut hak admin',
     ];

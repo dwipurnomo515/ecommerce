@@ -17,6 +17,7 @@ class AuditLogController extends Controller
         'store' => 'Toko',
         'order' => 'Pesanan',
         'payout' => 'Penarikan',
+        'refund' => 'Refund',
         'user' => 'Admin',
     ];
 
