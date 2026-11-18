@@ -5,6 +5,8 @@ import CartController from '@/actions/App/Http/Controllers/Shop/CartController';
 import { Price } from '@/components/shop/price';
 import { ProductGallery } from '@/components/shop/product-gallery';
 import { QuantityStepper } from '@/components/shop/quantity-stepper';
+import { RatingSummary } from '@/components/shop/rating-summary';
+import type { Rating } from '@/components/shop/rating-summary';
 import { Stars } from '@/components/shop/stars';
 import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
 import { Button, buttonVariants } from '@/components/ui/button';
@@ -38,6 +40,7 @@ type Props = {
         slug: string;
         joined_at: string | null;
         products_count: number;
+        rating: Rating | null;
     };
     isOwner: boolean;
     maxQuantity: number;
@@ -321,9 +324,13 @@ export default function ProductPage({
                         <StoreAvatar name={store.name} />
                         <div className="grid min-w-0 flex-1 gap-0.5">
                             <p className="truncate font-medium">{store.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                                {store.products_count} produk
-                                {joined && ` · ${joined}`}
+                            <p className="flex flex-wrap items-center gap-x-1.5 text-xs text-muted-foreground">
+                                <RatingSummary rating={store.rating} />
+                                {store.rating && <span aria-hidden>·</span>}
+                                <span>
+                                    {store.products_count} produk
+                                    {joined && ` · ${joined}`}
+                                </span>
                             </p>
                         </div>
                         <Link

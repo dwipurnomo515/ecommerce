@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\ProductStatus;
 use App\Enums\StoreStatus;
+use App\Models\Concerns\HasRatingTotals;
 use Carbon\CarbonImmutable;
 use Database\Factories\ProductFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -48,7 +49,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Product extends Model
 {
     /** @use HasFactory<ProductFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, HasRatingTotals, SoftDeletes;
 
     /**
      * @var array<string, mixed>
@@ -111,24 +112,6 @@ class Product extends Model
     public function reviews(): HasMany
     {
         return $this->hasMany(Review::class);
-    }
-
-    /**
-     * For the product card / page, or null when nobody reviewed it yet
-     * (no "0 stars" for a product that simply has no reviews).
-     *
-     * @return array{average: float, count: int}|null
-     */
-    public function ratingSummary(): ?array
-    {
-        if ($this->rating_count === 0) {
-            return null;
-        }
-
-        return [
-            'average' => round($this->rating_sum / $this->rating_count, 1),
-            'count' => $this->rating_count,
-        ];
     }
 
     /**

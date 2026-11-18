@@ -5,6 +5,7 @@ import {
     FolderTree,
     Inbox,
     LayoutGrid,
+    MessageSquare,
     Package,
     ShieldAlert,
     ShoppingBag,
@@ -30,6 +31,7 @@ import { index as adminStores } from '@/routes/admin/stores';
 import { index as buyerOrders } from '@/routes/orders';
 import { index as sellerOrders } from '@/routes/seller/orders';
 import { index as sellerProducts } from '@/routes/seller/products';
+import { index as sellerReviews } from '@/routes/seller/reviews';
 import { show as sellerStore } from '@/routes/seller/store';
 import type { NavItem } from '@/types';
 
@@ -59,6 +61,11 @@ const mainNavItems: NavItem[] = [
         title: 'Pesanan masuk',
         href: sellerOrders(),
         icon: Inbox,
+    },
+    {
+        title: 'Ulasan',
+        href: sellerReviews(),
+        icon: MessageSquare,
     },
 ];
 

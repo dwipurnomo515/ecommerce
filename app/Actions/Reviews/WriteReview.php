@@ -6,6 +6,7 @@ use App\Enums\OrderStatus;
 use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\Review;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -57,10 +58,10 @@ class WriteReview
                 // ONE atomic UPDATE: rating_count = rating_count + 1, ...
                 // Reading the totals, adding in PHP and writing them back
                 // would lose a review if two arrived at the same moment.
-                Product::query()->whereKey($item->product_id)->incrementEach([
-                    'rating_count' => 1,
-                    'rating_sum' => $rating,
-                ]);
+                $totals = ['rating_count' => 1, 'rating_sum' => $rating];
+                Product::query()->whereKey($item->product_id)->incrementEach($totals);
+                // The store's reputation moves with every product review.
+                Store::query()->whereKey($item->order->store_id)->incrementEach($totals);
 
                 return $review;
             });

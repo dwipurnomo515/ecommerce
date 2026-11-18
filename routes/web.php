@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\StoreController;
 use App\Http\Controllers\Seller\OrderController as SellerOrderController;
 use App\Http\Controllers\Seller\ProductController as SellerProductController;
 use App\Http\Controllers\Seller\ProductImageController;
+use App\Http\Controllers\Seller\ReviewController as SellerReviewController;
 use App\Http\Controllers\Seller\StoreController as SellerStoreController;
 use App\Http\Controllers\Shop\CartController;
 use App\Http\Controllers\Shop\CatalogController;
@@ -80,6 +81,9 @@ Route::middleware(['auth', 'verified'])
         Route::get('orders', [SellerOrderController::class, 'index'])->name('orders.index');
         Route::post('orders/{order}/process', [SellerOrderController::class, 'process'])->name('orders.process');
         Route::post('orders/{order}/ship', [SellerOrderController::class, 'ship'])->name('orders.ship');
+
+        Route::get('reviews', [SellerReviewController::class, 'index'])->name('reviews.index');
+        Route::post('reviews/{review}/reply', [SellerReviewController::class, 'reply'])->name('reviews.reply');
 
         // scopeBindings: /products/1/images/99 only resolves if image 99
         // really belongs to product 1 (otherwise 404).

@@ -1,6 +1,8 @@
 import { Head, Link } from '@inertiajs/react';
 import { ProductGrid } from '@/components/shop/product-grid';
 import type { ProductCardRow } from '@/components/shop/product-grid';
+import { RatingSummary } from '@/components/shop/rating-summary';
+import type { Rating } from '@/components/shop/rating-summary';
 import { SortSelect } from '@/components/shop/sort-select';
 import type { Sort } from '@/components/shop/sort-select';
 import { joinedText, StoreAvatar } from '@/components/shop/store-avatar';
@@ -14,6 +16,7 @@ type Props = {
         slug: string;
         description: string | null;
         joined_at: string | null;
+        rating: Rating | null;
     };
     products: Paginated<ProductCardRow>;
     sort: Sort;
@@ -41,9 +44,13 @@ export default function StorePage({ store, products, sort }: Props) {
                         <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">
                             {store.name}
                         </h1>
-                        <p className="text-sm text-muted-foreground tabular-nums">
-                            {products.total} produk
-                            {joined && ` · ${joined}`}
+                        <p className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground tabular-nums">
+                            <RatingSummary rating={store.rating} />
+                            {store.rating && <span aria-hidden>·</span>}
+                            <span>
+                                {products.total} produk
+                                {joined && ` · ${joined}`}
+                            </span>
                         </p>
                         {store.description && (
                             <p className="mt-1 max-w-2xl text-sm leading-relaxed whitespace-pre-line text-muted-foreground">

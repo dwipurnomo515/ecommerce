@@ -90,6 +90,7 @@ class ProductController extends Controller
                 'slug' => $product->store->slug,
                 'joined_at' => $product->store->approved_at?->toIso8601String(),
                 'products_count' => $product->store->products_count,
+                'rating' => $product->store->ratingSummary(),
             ],
         ]);
     }

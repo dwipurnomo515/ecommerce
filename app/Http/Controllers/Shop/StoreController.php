@@ -32,6 +32,7 @@ class StoreController extends Controller
                 'slug' => $store->slug,
                 'description' => $store->description,
                 'joined_at' => $store->approved_at?->toIso8601String(),
+                'rating' => $store->ratingSummary(),
             ],
             'products' => ProductCards::query($sort)
                 ->where('store_id', $store->id)

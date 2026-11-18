@@ -84,6 +84,10 @@ class ReviewTest extends TestCase
         $review = Review::query()->sole();
         $this->assertSame($this->product->id, $review->product_id);
         $this->assertSame($this->order->store_id, $review->store_id);
+
+        $store = $this->product->store->fresh();
+        $this->assertSame([1, 5], [$store?->rating_count, $store?->rating_sum], 'Store reputation moves too.');
+        $this->assertSame(['average' => 5.0, 'count' => 1], $store?->ratingSummary());
     }
 
     public function test_only_completed_orders_can_be_reviewed(): void

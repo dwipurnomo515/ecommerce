@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\StoreStatus;
+use App\Models\Concerns\HasRatingTotals;
 use App\Shipping\Destination;
 use Carbon\CarbonImmutable;
 use Database\Factories\StoreFactory;
@@ -23,6 +24,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string|null $origin_label
  * @property string|null $origin_city
  * @property StoreStatus $status
+ * @property int $rating_count Reviews of all its products (running total)
+ * @property int $rating_sum
  * @property CarbonImmutable|null $approved_at
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
@@ -33,7 +36,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Store extends Model
 {
     /** @use HasFactory<StoreFactory> */
-    use HasFactory;
+    use HasFactory, HasRatingTotals;
 
     /**
      * Mirrors the DB default so a freshly created model knows its status
@@ -43,6 +46,8 @@ class Store extends Model
      */
     protected $attributes = [
         'status' => 'pending',
+        'rating_count' => 0,
+        'rating_sum' => 0,
     ];
 
     /**
@@ -91,6 +96,8 @@ class Store extends Model
         return [
             'status' => StoreStatus::class,
             'approved_at' => 'datetime',
+            'rating_count' => 'integer',
+            'rating_sum' => 'integer',
         ];
     }
 }
