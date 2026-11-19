@@ -69,13 +69,21 @@ tersedia". Test **tidak pernah** memanggil API sungguhan (`Http::preventStrayReq
 Disarankan **ngrok** (akun gratis mendapat satu domain tetap, jadi URL cukup diisi sekali):
 
 ```bash
-# Ambil authtoken dan domain gratis Anda di dashboard.ngrok.com
-docker run --rm -it -e NGROK_AUTHTOKEN=<token-anda> ngrok/ngrok:latest \
-  http --url=<domain-anda>.ngrok-free.app host.docker.internal:8000
+# Simpan authtoken dari dashboard.ngrok.com di .env (tidak ikut ke git):
+#   NGROK_AUTHTOKEN=...
+# Jalan di latar belakang dan ikut menyala lagi setelah Docker restart.
+# Tanpa --url, ngrok memakai domain gratis akun Anda (*.ngrok-free.dev).
+docker run -d --name zetago-ngrok --restart unless-stopped -p 4040:4040 \
+  -e NGROK_AUTHTOKEN="$(grep '^NGROK_AUTHTOKEN=' .env | cut -d= -f2-)" \
+  ngrok/ngrok:latest http host.docker.internal:8000
+
+# URL publiknya (juga terlihat di http://localhost:4040):
+curl -s http://localhost:4040/api/tunnels | grep -o 'https://[^"]*ngrok[^"]*'
 ```
 
-Alternatif tanpa akun (URL berubah setiap kali dijalankan ulang):
-`docker run --rm cloudflare/cloudflared:latest tunnel --url http://host.docker.internal:8000`
+Alternatif tanpa akun: `cloudflared tunnel --url`. URL-nya berubah setiap kali dijalankan
+ulang, dan _quick tunnel_ bisa mati sendiri setelah beberapa waktu. Di project ini
+webhook pernah gagal karena itu (pembayaran tetap tercatat lewat rekonsiliasi).
 
 Isi `https://<domain>/webhooks/midtrans` di dashboard sandbox Midtrans:
 _Settings → Payment → Notification URL_.
