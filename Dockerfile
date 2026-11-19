@@ -17,6 +17,9 @@ FROM serversideup/php:${PHP_VERSION}-fpm-nginx AS base
 USER root
 # Defaults already include pdo_pgsql, redis, opcache, pcntl, zip, mbstring...
 RUN install-php-extensions intl gd bcmath exif
+# Our nginx overrides: no duplicate security headers (Laravel sends them),
+# nosniff + sandbox CSP for files nginx serves itself. See the files.
+COPY docker/nginx/security.conf docker/nginx/performance.conf /etc/nginx/server-opts.d/
 USER www-data
 
 # -----------------------------------------------------------------------------

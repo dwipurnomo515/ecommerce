@@ -28,6 +28,9 @@ cp .env.example .env
 
 # 2. Build image & install dependency (PHP + JS)
 docker compose build
+#    Jika gagal dengan "additional privileges requested: --allow=fs.read=Dockerfile"
+#    (terjadi di sebagian mesin Windows), build langsung tanpa Compose:
+#    docker build --target development -t ecommerce-app:dev .
 docker compose run --rm --no-deps app composer install
 docker compose run --rm --no-deps app npm install
 
