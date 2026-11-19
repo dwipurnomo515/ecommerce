@@ -17,12 +17,24 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 | 5     | [Pembayaran (Midtrans)](05-pembayaran.md)               | ✅ Selesai |
 | 6     | [Pesanan & ulasan](06-pesanan-ulasan.md)                | ✅ Selesai |
 | 7     | [Saldo, pencairan & refund](07-saldo-pencairan.md)      | ✅ Selesai |
-| 8     | Hardening keamanan                                      | ⏳         |
+| 8     | [Hardening keamanan](08-hardening.md)                   | ✅ Selesai |
 | 9     | Production (Docker image, deploy)                       | ⏳         |
 
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 8:
+
+```
+cb2d8de feat(security): route guard rails, write throttling and admin second factor
+b217d2c feat(reviews): admins hide abusive reviews, averages recomputed
+fb85685 feat(search): typo-tolerant product search with pg_trgm
+c7f1841 feat(admin): finance overview and retries for stuck payouts and refunds
+8d49797 feat(audit): append-only audit log for moderation, money and admin rights
+1677892 feat(security): HTTP security headers and a nonce-based CSP
+6156906 feat(media): strip EXIF/GPS from product photos and add thumbnails
+```
 
 Tahap 7:
 
@@ -124,3 +136,8 @@ Lihat detailnya dengan `git log --stat`.
     saldo saya segini?" baris demi baris (lihat [Tahap 7](07-saldo-pencairan.md)).
 15. **Kalau tidak tahu, jangan menebak.** Transfer yang hasilnya tidak pasti tidak dikembalikan
     otomatis, karena menebak salah bisa berarti membayar dua kali.
+16. **Jadikan aturan keamanan sebagai test, bukan ingatan.** "Setiap route butuh login" ditulis
+    sebagai test yang membaca tabel route, jadi route baru yang lupa dilindungi langsung ketahuan
+    (lihat [Tahap 8](08-hardening.md)).
+17. **Temuan yang diterima tetap dicatat.** `npm audit` yang tidak bisa diperbaiki tidak
+    diabaikan diam-diam: alasannya ditulis dan ada jadwal untuk diperiksa ulang.
