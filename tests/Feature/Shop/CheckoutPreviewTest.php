@@ -148,6 +148,20 @@ class CheckoutPreviewTest extends TestCase
         $this->assertSame('unavailable', $this->checkout()['stores'][0]['shipping']['status']);
     }
 
+    public function test_an_unknown_region_says_who_has_to_fix_it(): void
+    {
+        $this->inCart($this->store(), 200);
+        $this->address();
+
+        Http::fake([self::COST_URL => Http::sequence()
+            ->push(['meta' => ['message' => 'origin not found', 'code' => 404, 'status' => 'error'], 'data' => null], 404)
+            ->push(['meta' => ['message' => 'destination not found', 'code' => 404, 'status' => 'error'], 'data' => null], 404)]);
+
+        // Failed quotes are not cached, so the second visit asks again.
+        $this->assertSame('origin_unknown', $this->checkout()['stores'][0]['shipping']['status']);
+        $this->assertSame('address_unknown', $this->checkout()['stores'][0]['shipping']['status']);
+    }
+
     public function test_another_address_can_be_chosen_but_not_someone_elses(): void
     {
         $this->fakeCosts();

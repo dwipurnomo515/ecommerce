@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Shipping\ShippingOption;
 use App\Shipping\ShippingProvider;
 use App\Shipping\ShippingUnavailable;
+use App\Shipping\UnknownRegion;
 use App\Support\CartView;
 use Illuminate\Support\Facades\Log;
 
@@ -30,6 +31,12 @@ class CheckoutPreview
     public const NO_COURIER = 'no_courier';
 
     public const UNAVAILABLE = 'unavailable';
+
+    /** The buyer's address region is unknown to the shipping service. */
+    public const ADDRESS_UNKNOWN = 'address_unknown';
+
+    /** The store's shipping origin is unknown to the shipping service. */
+    public const ORIGIN_UNKNOWN = 'origin_unknown';
 
     public function __construct(private readonly ShippingProvider $shipping) {}
 
@@ -100,6 +107,13 @@ class CheckoutPreview
             /** @var int $origin hasShippingOrigin() checked it */
             $origin = $store->origin_destination_id;
             $options = $this->shipping->quote($origin, $address->destination_id, $grams);
+        } catch (UnknownRegion $e) {
+            Log::notice('Shipping region unknown', ['store' => $store->id, 'address' => $address->id, 'error' => $e->getMessage()]);
+
+            return [
+                'status' => $e->side === UnknownRegion::ORIGIN ? self::ORIGIN_UNKNOWN : self::ADDRESS_UNKNOWN,
+                'options' => [],
+            ];
         } catch (ShippingUnavailable $e) {
             Log::warning('Shipping quote failed', ['store' => $store->id, 'error' => $e->getMessage()]);
 

@@ -21,7 +21,9 @@ type ShippingStatus =
     | 'no_address'
     | 'no_origin'
     | 'no_courier'
-    | 'unavailable';
+    | 'unavailable'
+    | 'address_unknown'
+    | 'origin_unknown';
 
 type ShippingOption = {
     key: string;
@@ -79,6 +81,10 @@ const shippingNotice: Record<Exclude<ShippingStatus, 'ok'>, string> = {
     no_courier: 'Belum ada kurir yang melayani rute ini.',
     unavailable:
         'Ongkir sedang tidak bisa dihitung. Muat ulang halaman sebentar lagi.',
+    address_unknown:
+        'Wilayah pada alamat ini tidak dikenali layanan ongkir. Ubah alamat lalu pilih ulang kelurahannya.',
+    origin_unknown:
+        'Alamat pengiriman toko ini tidak dikenali layanan ongkir, jadi produknya belum bisa dikirim. Toko perlu memperbaruinya.',
 };
 
 function formatWeight(grams: number): string {
@@ -369,6 +375,17 @@ function StoreParcel({
                         )}
                     >
                         {shippingNotice[store.shipping.status]}
+                        {store.shipping.status === 'address_unknown' && (
+                            <>
+                                {' '}
+                                <Link
+                                    href={addressesIndex()}
+                                    className="font-medium text-foreground underline underline-offset-4"
+                                >
+                                    Ubah alamat
+                                </Link>
+                            </>
+                        )}
                     </p>
                 )}
             </fieldset>

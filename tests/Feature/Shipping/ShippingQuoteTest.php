@@ -5,6 +5,7 @@ namespace Tests\Feature\Shipping;
 use App\Shipping\ShippingOption;
 use App\Shipping\ShippingProvider;
 use App\Shipping\ShippingUnavailable;
+use App\Shipping\UnknownRegion;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -103,6 +104,32 @@ class ShippingQuoteTest extends TestCase
         Http::fake([self::URL => Http::response(['meta' => ['message' => 'cost not found', 'code' => 400, 'status' => 'error'], 'data' => null], 400)]);
 
         $this->assertSame([], $this->shipping()->quote(1, 2, 1000));
+    }
+
+    public function test_an_unknown_region_names_the_side_that_is_wrong(): void
+    {
+        // Bodies as returned by the live API for a region ID it does not know.
+        Http::fake([self::URL => Http::sequence()
+            ->push(['meta' => ['message' => 'origin not found', 'code' => 404, 'status' => 'error'], 'data' => null], 404)
+            ->push(['meta' => ['message' => 'destination not found', 'code' => 404, 'status' => 'error'], 'data' => null], 404)
+            ->push(['meta' => ['message' => 'Not Found'], 'data' => null], 404)]);
+
+        foreach ([UnknownRegion::ORIGIN, UnknownRegion::DESTINATION] as $expected) {
+            try {
+                $this->shipping()->quote(900002, 31555, 1000);
+                $this->fail('Expected UnknownRegion.');
+            } catch (UnknownRegion $e) {
+                $this->assertSame($expected, $e->side);
+            }
+        }
+
+        // A 404 that does not name a side (e.g. a wrong URL) stays an outage.
+        try {
+            $this->shipping()->quote(900002, 31555, 1000);
+            $this->fail('Expected ShippingUnavailable.');
+        } catch (ShippingUnavailable $e) {
+            $this->assertNotInstanceOf(UnknownRegion::class, $e);
+        }
     }
 
     public function test_an_outage_throws_and_is_not_cached(): void

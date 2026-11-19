@@ -69,6 +69,19 @@ class RajaOngkir implements ShippingProvider
             return [];
         }
 
+        // 404 with "origin not found" / "destination not found": the region
+        // ID is not theirs (checked against the live API). Name the side, so
+        // the right person is asked to fix it.
+        if ($response->status() === 404) {
+            $message = strtolower((string) $response->json('meta.message'));
+
+            foreach ([UnknownRegion::ORIGIN, UnknownRegion::DESTINATION] as $side) {
+                if (str_contains($message, $side)) {
+                    throw new UnknownRegion($side, "RajaOngkir: {$side} {$originId}→{$destinationId} not found");
+                }
+            }
+        }
+
         if ($response->failed()) {
             throw new ShippingUnavailable("RajaOngkir cost failed: HTTP {$response->status()}");
         }
