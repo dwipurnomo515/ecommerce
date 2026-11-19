@@ -5,9 +5,12 @@ namespace Database\Seeders;
 use App\Enums\ProductStatus;
 use App\Enums\StoreStatus;
 use App\Models\Category;
+use App\Models\Product;
+use App\Models\ProductImage;
 use App\Models\Store;
 use App\Models\User;
 use App\Shipping\FlatRateShipping;
+use Database\Seeders\Support\DemoArtwork;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use RuntimeException;
@@ -43,7 +46,10 @@ class DemoSeeder extends Seeder
         ]);
         $store->status = StoreStatus::Active;
         $store->approved_at ??= now();
-        $store->setShippingOrigin(FlatRateShipping::sample(1)); // Bandung
+        if ($store->origin_destination_id === null) {
+            // Only when empty: never overwrite a real region chosen in the app.
+            $store->setShippingOrigin(FlatRateShipping::sample(1)); // Bandung
+        }
         $store->save();
 
         $category = Category::query()->firstOrCreate(
@@ -51,12 +57,26 @@ class DemoSeeder extends Seeder
             ['name' => 'Fashion (Contoh)', 'is_active' => true],
         );
 
-        $this->product($store, $category, 'Kaos Polos (Contoh)', 'kaos-polos-contoh',
+        $kitchen = Category::query()->firstOrCreate(
+            ['slug' => 'dapur-contoh'],
+            ['name' => 'Dapur (Contoh)', 'is_active' => true],
+        );
+
+        $this->product($store, $category, 'Kaos Polos (Contoh)', 'kaos-polos-contoh', 'tee', 250,
             [['name' => 'Ukuran', 'values' => ['M', 'L']]],
             [[['Ukuran' => 'M'], 75_000, 20], [['Ukuran' => 'L'], 80_000, 20]]);
 
-        $this->product($store, $category, 'Topi Rimba (Contoh)', 'topi-rimba-contoh', [],
+        $this->product($store, $category, 'Topi Rimba (Contoh)', 'topi-rimba-contoh', 'hat', 150, [],
             [[[], 45_000, 10]]);
+
+        $this->product($store, $category, 'Tas Tote Kanvas (Contoh)', 'tas-tote-kanvas-contoh', 'tote', 300, [],
+            [[[], 120_000, 15]]);
+
+        $this->product($store, $kitchen, 'Mug Keramik Pinus (Contoh)', 'mug-keramik-pinus-contoh', 'mug', 450, [],
+            [[[], 65_000, 25]]);
+
+        $this->product($store, $kitchen, 'Botol Minum Baja 500 ml (Contoh)', 'botol-minum-baja-contoh', 'bottle', 350, [],
+            [[[], 135_000, 12]]);
 
         $buyer = $this->user('pembeli@example.com', 'Pembeli Contoh');
 
@@ -103,9 +123,14 @@ class DemoSeeder extends Seeder
      * @param  list<array{name: string, values: list<string>}>  $options
      * @param  list<array{0: array<string, string>, 1: int, 2: int}>  $variants  [options, price, stock]
      */
-    private function product(Store $store, Category $category, string $name, string $slug, array $options, array $variants): void
+    private function product(Store $store, Category $category, string $name, string $slug, string $artwork, int $weightGrams, array $options, array $variants): void
     {
-        if ($store->products()->where('slug', $slug)->exists()) {
+        $existing = $store->products()->where('slug', $slug)->first();
+
+        if ($existing !== null) {
+            // Products seeded before the artwork existed get their photos now.
+            $this->photos($existing, $artwork);
+
             return;
         }
 
@@ -124,8 +149,35 @@ class DemoSeeder extends Seeder
                 'options' => $variantOptions,
                 'price' => $price,
                 'stock' => $stock,
-                'weight_grams' => 250,
+                'weight_grams' => $weightGrams,
             ]);
+        }
+
+        $this->photos($product, $artwork);
+    }
+
+    /**
+     * Drawn illustrations (see DemoArtwork), stored through the same
+     * pipeline as a seller's upload. Skipped when the product has photos.
+     */
+    private function photos(Product $product, string $artwork): void
+    {
+        if ($product->images()->exists()) {
+            return;
+        }
+
+        $shots = DemoArtwork::shots($artwork);
+
+        try {
+            foreach ($shots as $order => $path) {
+                $product->images()->create([
+                    ...ProductImage::storeProcessed($path, $product->id),
+                    'alt' => $product->name.($order === 0 ? '' : ', detail'),
+                    'sort_order' => $order,
+                ]);
+            }
+        } finally {
+            array_map(unlink(...), $shots);
         }
     }
 }
