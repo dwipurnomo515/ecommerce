@@ -51,6 +51,14 @@ class Midtrans implements PaymentGateway
                     ],
                     'item_details' => $items,
                     'customer_details' => $this->customer($checkout),
+                    // Where Midtrans sends the buyer back after a payment
+                    // that leaves our page (GoPay/ShopeePay app, bank pages).
+                    // Overrides the dashboard setting and follows APP_URL in
+                    // every environment. The order_id/status Midtrans appends
+                    // to the URL are ignored: that page asks Midtrans itself.
+                    'callbacks' => [
+                        'finish' => route('checkout.placed', $checkout->code),
+                    ],
                     // The payment screen closes when our stock hold ends.
                     'expiry' => [
                         'start_time' => now('Asia/Jakarta')->format('Y-m-d H:i:s O'),

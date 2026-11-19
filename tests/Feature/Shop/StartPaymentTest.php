@@ -108,7 +108,9 @@ class StartPaymentTest extends TestCase
                 && collect($r['item_details'])->pluck('name')->contains('Ongkir Toko Contoh')
                 && $r['customer_details']['phone'] === '081234567890'
                 && $r['expiry']['unit'] === 'minute'
-                && $r['expiry']['duration'] === 24 * 60;
+                && $r['expiry']['duration'] === 24 * 60
+                // Back to the order page (which reconciles) after app/bank redirects.
+                && $r['callbacks']['finish'] === route('checkout.placed', $this->checkout->code);
         });
 
         $this->assertSame('snap-token-123', $this->checkout->fresh()?->payment_token);
