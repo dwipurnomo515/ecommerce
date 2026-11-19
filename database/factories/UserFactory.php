@@ -47,9 +47,18 @@ class UserFactory extends Factory
     }
 
     /**
-     * Marketplace staff with access to the admin panel.
+     * Marketplace staff with access to the admin panel. Comes with 2FA set
+     * up, like any real admin must (RequireAdminSecondFactor).
      */
     public function admin(): static
+    {
+        return $this->withTwoFactor()->state(fn (array $attributes) => [
+            'is_admin' => true,
+        ]);
+    }
+
+    /** An admin who never set up a second factor: locked out of admin pages. */
+    public function adminWithoutSecondFactor(): static
     {
         return $this->state(fn (array $attributes) => [
             'is_admin' => true,

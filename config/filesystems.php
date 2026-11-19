@@ -40,7 +40,11 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // Off: this would register GET/PUT storage/{path} routes for
+            // signed temporary URLs to private files. We don't use them
+            // (product photos live on the public media disk), and an
+            // unused route is attack surface with no benefit.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

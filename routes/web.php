@@ -21,6 +21,7 @@ use App\Http\Controllers\Shop\ProductController as ShopProductController;
 use App\Http\Controllers\Shop\ReviewController;
 use App\Http\Controllers\Shop\StoreController as ShopStoreController;
 use App\Http\Controllers\Webhooks\MidtransWebhookController;
+use App\Http\Middleware\RequireAdminSecondFactor;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [CatalogController::class, 'home'])->name('home');
@@ -107,7 +108,7 @@ Route::middleware(['auth', 'verified'])
     });
 
 // Marketplace staff only. `can:admin` runs the Gate defined in AppServiceProvider.
-Route::middleware(['auth', 'verified', 'can:admin'])
+Route::middleware(['auth', 'verified', 'can:admin', RequireAdminSecondFactor::class])
     ->prefix('admin')
     ->name('admin.')
     ->group(function () {
