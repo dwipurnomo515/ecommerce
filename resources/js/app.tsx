@@ -7,7 +7,7 @@ import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
 import ShopLayout from '@/layouts/shop-layout';
 
-const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+const appName = import.meta.env.VITE_APP_NAME || 'Zetago';
 
 void createInertiaApp({
     title: (title) => (title ? `${title} - ${appName}` : appName),
