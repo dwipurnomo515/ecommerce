@@ -17,6 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Trusted proxies: see config/trustedproxy.php.
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
         // Payment providers call these from their servers: they have no
