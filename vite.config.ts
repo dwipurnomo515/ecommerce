@@ -29,12 +29,19 @@ export default defineConfig({
         wayfinder({
             formVariants: true,
         }),
+        {
+            // SSR BUILD only: bundle every dependency into
+            // bootstrap/ssr/ssr.js, so the production SSR container is just
+            // Node + that file, no node_modules. Not in the dev server:
+            // there it pushes CommonJS packages through Vite's ES module
+            // runner and SSR fails with "module is not defined".
+            name: 'zetago:self-contained-ssr-build',
+            config: (_config, { command, isSsrBuild }) =>
+                command === 'build' && isSsrBuild
+                    ? { ssr: { noExternal: true } }
+                    : undefined,
+        },
     ]),
-    // SSR build: bundle every dependency into bootstrap/ssr/ssr.js, so the
-    // production SSR container is just Node + that file, no node_modules.
-    ssr: {
-        noExternal: true,
-    },
     server: {
         // Inside Docker: listen on all interfaces, tell the browser to reach
         // Vite via localhost, and poll for changes (file events from a
