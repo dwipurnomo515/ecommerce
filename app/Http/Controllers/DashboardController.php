@@ -4,10 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
+use App\Enums\ProductStatus;
 use App\Models\Checkout;
 use App\Models\Order;
+use App\Models\Payout;
+use App\Models\ProductVariant;
+use App\Models\Review;
+use App\Models\Store;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,6 +27,9 @@ class DashboardController extends Controller
     /** Orders still on their way to the buyer. */
     private const ACTIVE = [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped];
 
+    /** Same threshold as the "Sisa N" hint on the product page. */
+    private const LOW_STOCK = 5;
+
     public function __invoke(Request $request): Response
     {
         /** @var User $user */
@@ -28,7 +37,75 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'buyer' => $this->buyer($user),
+            // Only for users who opened a store.
+            'seller' => $user->store === null ? null : $this->seller($user->store),
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function seller(Store $store): array
+    {
+        $counts = Order::query()
+            ->where('store_id', $store->id)
+            ->whereIn('status', [OrderStatus::Paid, OrderStatus::Processing])
+            ->toBase()
+            ->selectRaw('status, count(*) as total')
+            ->groupBy('status')
+            ->pluck('total', 'status');
+
+        // Same formula as the "Saldo" page: paid, not completed yet.
+        $held = (int) Order::query()
+            ->where('store_id', $store->id)
+            ->whereIn('status', Order::HELD_STATUSES)
+            ->sum(DB::raw(Order::SELLER_EARNING_SQL));
+
+        // On sale now and (almost) gone: sold out first. Draft, archived
+        // and banned products don't sell, so their stock doesn't matter.
+        $lowStock = ProductVariant::query()
+            ->where('is_active', true)
+            ->where('stock', '<=', self::LOW_STOCK)
+            ->whereHas('product', fn ($q) => $q
+                ->where('store_id', $store->id)
+                ->where('status', ProductStatus::Active));
+
+        return [
+            'store' => [
+                'name' => $store->name,
+                'status' => $store->status->value,
+                'status_label' => $store->status->label(),
+            ],
+            'counts' => [
+                'to_process' => (int) ($counts[OrderStatus::Paid->value] ?? 0),
+                'to_ship' => (int) ($counts[OrderStatus::Processing->value] ?? 0),
+                'unanswered_reviews' => Review::query()
+                    ->where('store_id', $store->id)
+                    ->whereNull('seller_reply')
+                    ->whereNull('hidden_at')
+                    ->count(),
+                'low_stock' => (clone $lowStock)->count(),
+            ],
+            'balance' => [
+                'available' => $store->balance,
+                'held' => $held,
+                'can_withdraw' => $store->balance >= Payout::MINIMUM,
+            ],
+            'low_stock' => $lowStock
+                ->with('product:id,name')
+                ->orderBy('stock')
+                ->orderBy('id')
+                ->limit(5)
+                ->get()
+                ->map(fn (ProductVariant $v) => [
+                    'id' => $v->id,
+                    'product_id' => $v->product_id,
+                    'product' => $v->product->name,
+                    'variant' => implode(' / ', array_values($v->options)),
+                    'stock' => $v->stock,
+                ])
+                ->all(),
+        ];
     }
 
     /**

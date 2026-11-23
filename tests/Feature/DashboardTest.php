@@ -9,6 +9,7 @@ use App\Models\Checkout;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Review;
 use App\Models\Store;
 use App\Models\User;
 use App\Shipping\Destination;
@@ -39,13 +40,15 @@ class DashboardTest extends TestCase
     /**
      * Places a real order (one checkout, one store) for $buyer.
      */
-    private function placeOrder(User $buyer, string $storeName = 'Toko Kaos'): Order
+    private function placeOrder(User $buyer, string|Store $store = 'Toko Kaos'): Order
     {
         // One primary address per user (unique), reused for every order.
         $address = $buyer->addresses()->first() ?? Address::factory()->for($buyer)->primary()->create();
-        $store = Store::factory()->active()->create(['name' => $storeName]);
-        $store->setShippingOrigin(new Destination(1, 'ASAL', 'P', 'K', 'D', 'S', '10000'));
-        $store->save();
+        if (is_string($store)) {
+            $store = Store::factory()->active()->create(['name' => $store]);
+            $store->setShippingOrigin(new Destination(1, 'ASAL', 'P', 'K', 'D', 'S', '10000'));
+            $store->save();
+        }
 
         $variant = ProductVariant::factory()
             ->for(Product::factory()->active()->for($store))
@@ -85,7 +88,9 @@ class DashboardTest extends TestCase
                 ->component('dashboard')
                 ->where('buyer.counts', ['unpaid' => 0, 'in_progress' => 0, 'shipped' => 0])
                 ->where('buyer.unpaid', [])
-                ->where('buyer.active', []));
+                ->where('buyer.active', [])
+                // No store, no seller section.
+                ->where('seller', null));
     }
 
     public function test_an_unpaid_checkout_is_listed_until_its_deadline(): void
@@ -122,6 +127,81 @@ class DashboardTest extends TestCase
                 ->has('buyer.active', 2)
                 ->where('buyer.active', fn ($rows) => collect($rows)->pluck('store')->sort()->values()->all() === ['Toko Kaos', 'Toko Mug'])
                 ->where('buyer.active', fn ($rows) => collect($rows)->firstWhere('store', 'Toko Mug')['tracking_number'] === 'JP123'));
+    }
+
+    public function test_the_seller_sees_what_needs_doing(): void
+    {
+        $store = Store::factory()->active()->create(['name' => 'Toko Kaos']);
+        $store->setShippingOrigin(new Destination(1, 'ASAL', 'P', 'K', 'D', 'S', '10000'));
+        $store->forceFill(['balance' => 75_000])->save();
+
+        // Each order buys 1 of a variant with stock 5, leaving 4: low.
+        $toProcess = $this->placeOrder($this->buyer, $store);
+        $toShip = $this->placeOrder($this->buyer, $store);
+        $done = $this->placeOrder($this->buyer, $store);
+        $this->placeOrder($this->buyer, $store); // unpaid: not the seller's business yet
+        $this->moveTo($toProcess, OrderStatus::Paid);
+        $this->moveTo($toShip, OrderStatus::Processing);
+        $this->moveTo($done, OrderStatus::Completed);
+
+        // Sold out and plenty in stock; sold out comes first.
+        $kaos = Product::factory()->active()->for($store)->create(['name' => 'Kaos Polos']);
+        ProductVariant::factory()->for($kaos)->create(['stock' => 0, 'options' => ['Ukuran' => 'XL']]);
+        ProductVariant::factory()->for($kaos)->create(['stock' => 40]);
+        // Not on sale, so not counted: a draft, a removed variant, another store.
+        ProductVariant::factory()->for(Product::factory()->for($store))->create(['stock' => 0]);
+        ProductVariant::factory()->for($kaos)->create(['stock' => 0, 'is_active' => false]);
+        ProductVariant::factory()->for(Product::factory()->active())->create(['stock' => 0]);
+
+        // Unanswered counts; replied and hidden ones don't.
+        $this->review($done, reply: null);
+        $this->review($toShip, reply: 'Terima kasih!');
+        $this->review($toProcess, reply: null, hidden: true);
+
+        $this->actingAs($store->user)->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('seller.store', ['name' => 'Toko Kaos', 'status' => 'active', 'status_label' => 'Aktif'])
+                ->where('seller.counts', ['to_process' => 1, 'to_ship' => 1, 'unanswered_reviews' => 1, 'low_stock' => 5])
+                ->where('seller.balance', [
+                    'available' => 75_000,
+                    'held' => $toProcess->fresh()?->sellerEarning() + $toShip->fresh()?->sellerEarning(),
+                    'can_withdraw' => true,
+                ])
+                ->has('seller.low_stock', 5)
+                ->where('seller.low_stock.0.product', 'Kaos Polos')
+                ->where('seller.low_stock.0.variant', 'XL')
+                ->where('seller.low_stock.0.stock', 0)
+                ->where('seller.low_stock.1.stock', 4));
+    }
+
+    public function test_a_store_awaiting_approval_says_so(): void
+    {
+        $store = Store::factory()->for($this->buyer)->create();
+
+        $this->actingAs($this->buyer)->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('seller.store.status', 'pending')
+                ->where('seller.counts', ['to_process' => 0, 'to_ship' => 0, 'unanswered_reviews' => 0, 'low_stock' => 0])
+                ->where('seller.balance', ['available' => 0, 'held' => 0, 'can_withdraw' => false])
+                ->where('seller.low_stock', []));
+
+        $this->assertSame($store->id, $this->buyer->fresh()?->store?->id);
+    }
+
+    /**
+     * A review on the order's first item, as WriteReview would store it
+     * (that path itself is covered in Shop\ReviewTest).
+     */
+    private function review(Order $order, ?string $reply, bool $hidden = false): void
+    {
+        $item = $order->items()->firstOrFail();
+
+        (new Review)->forceFill([
+            'order_item_id' => $item->id, 'product_id' => $item->product_id, 'store_id' => $order->store_id,
+            'user_id' => User::factory()->create()->id, 'rating' => 5, 'body' => 'Bagus.',
+            'seller_reply' => $reply,
+            'hidden_at' => $hidden ? now() : null, 'hidden_reason' => $hidden ? 'Spam' : null,
+        ])->save();
     }
 
     public function test_nobody_sees_someone_elses_orders(): void
