@@ -13,6 +13,9 @@ use App\Payments\PaymentGateway;
 use App\Shipping\Destination;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Illuminate\Testing\TestResponse;
@@ -114,6 +117,31 @@ class StartPaymentTest extends TestCase
         });
 
         $this->assertSame('snap-token-123', $this->checkout->fresh()?->payment_token);
+    }
+
+    public function test_each_call_is_logged_in_one_line_without_secrets_or_buyer_data(): void
+    {
+        /** @var list<MessageLogged> $logged */
+        $logged = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $e) use (&$logged) {
+            $logged[] = $e;
+        });
+
+        $this->snapFails = true;
+        $this->pay();
+        $this->snapFails = false;
+        $this->pay();
+
+        $lines = collect($logged)->filter(fn (MessageLogged $e) => $e->message === 'Midtrans snap')->values();
+        $this->assertCount(2, $lines);
+        $this->assertSame(['gross_amount tidak sama'], $lines[0]->context['error_messages'], 'Why Midtrans refused.');
+        $this->assertSame(['order_id' => $this->checkout->code, 'http' => 201], Arr::except($lines[1]->context, 'ms'));
+        $this->assertIsInt($lines[1]->context['ms']);
+
+        $everything = json_encode(array_map(fn (MessageLogged $e) => [$e->message, $e->context], $logged));
+        foreach ([self::FAKE_SERVER_KEY, $this->buyer->email, '081234567890'] as $private) {
+            $this->assertStringNotContainsString($private, (string) $everything);
+        }
     }
 
     public function test_later_clicks_reuse_the_token(): void

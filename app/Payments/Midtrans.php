@@ -4,7 +4,9 @@ namespace App\Payments;
 
 use App\Models\Checkout;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -34,6 +36,8 @@ class Midtrans implements PaymentGateway
         if ($sum !== $checkout->grand_total) {
             throw new PaymentUnavailable("Item total {$sum} != grand total {$checkout->grand_total} for {$checkout->code}.");
         }
+
+        $started = hrtime(true);
 
         try {
             $response = Http::baseUrl($this->apiUrl())
@@ -68,8 +72,14 @@ class Midtrans implements PaymentGateway
                     ],
                 ]);
         } catch (ConnectionException $e) {
+            $this->logCall('snap', $checkout->code, $started, null);
+
             throw new PaymentUnavailable('Midtrans unreachable: '.$e->getMessage(), previous: $e);
         }
+
+        $this->logCall('snap', $checkout->code, $started, $response, [
+            'error_messages' => $response->json('error_messages'),
+        ]);
 
         $token = $response->json('token');
 
@@ -121,6 +131,8 @@ class Midtrans implements PaymentGateway
             throw new PaymentUnavailable('MIDTRANS_SERVER_KEY is not set.');
         }
 
+        $started = hrtime(true);
+
         try {
             $response = Http::baseUrl($this->production ? 'https://api.midtrans.com' : 'https://api.sandbox.midtrans.com')
                 ->withBasicAuth($this->serverKey, '')
@@ -129,11 +141,18 @@ class Midtrans implements PaymentGateway
                 ->timeout(5)
                 ->get('v2/'.rawurlencode($orderId).'/status');
         } catch (ConnectionException $e) {
+            $this->logCall('status', $orderId, $started, null);
+
             throw new PaymentUnavailable('Midtrans unreachable: '.$e->getMessage(), previous: $e);
         }
 
         /** @var array<string, mixed> $body */
         $body = $response->json() ?? [];
+
+        $this->logCall('status', $orderId, $started, $response, [
+            'transaction_status' => $body['transaction_status'] ?? null,
+            'status_message' => $response->failed() ? ($body['status_message'] ?? null) : null,
+        ]);
 
         // "Transaction doesn't exist": the buyer opened the popup but never
         // chose a payment method. Nothing to apply.
@@ -190,6 +209,28 @@ class Midtrans implements PaymentGateway
                 ? 'https://app.midtrans.com/snap/snap.js'
                 : 'https://app.sandbox.midtrans.com/snap/snap.js',
         ];
+    }
+
+    /**
+     * One line per call to Midtrans: which call, which order, how it went,
+     * how long it took. Deliberately NOT the request or response bodies:
+     * requests carry the server key (Basic auth) and the buyer's name,
+     * email and phone; logs get copied to places a database never goes.
+     *
+     * @param  array<string, mixed>  $extra  short, non-personal details
+     */
+    private function logCall(string $call, string $orderId, int $started, ?Response $response, array $extra = []): void
+    {
+        $context = array_filter([
+            'order_id' => $orderId,
+            'http' => $response?->status() ?? 'unreachable',
+            'ms' => intdiv(hrtime(true) - $started, 1_000_000),
+            ...$extra,
+        ], fn ($value) => $value !== null);
+
+        $response === null || $response->serverError()
+            ? Log::warning("Midtrans {$call}", $context)
+            : Log::info("Midtrans {$call}", $context);
     }
 
     private function apiUrl(): string

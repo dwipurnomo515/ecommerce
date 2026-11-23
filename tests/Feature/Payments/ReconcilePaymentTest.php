@@ -13,7 +13,10 @@ use App\Models\User;
 use App\Shipping\Destination;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Log\Events\MessageLogged;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\TestCase;
@@ -102,6 +105,23 @@ class ReconcilePaymentTest extends TestCase
 
         Http::assertSent(fn (Request $r) => $r->url() === "https://api.sandbox.midtrans.com/v2/{$this->checkout->code}/status"
             && $r->hasHeader('Authorization', 'Basic '.base64_encode('SB-Mid-server-TEST:')));
+    }
+
+    public function test_each_status_check_leaves_one_log_line(): void
+    {
+        $logged = [];
+        Event::listen(MessageLogged::class, function (MessageLogged $e) use (&$logged) {
+            if ($e->message === 'Midtrans status') {
+                $logged[] = [$e->level, Arr::except($e->context, 'ms')];
+            }
+        });
+        $this->midtransSays('settlement');
+
+        $this->actingAs($this->buyer)->get(route('checkout.placed', $this->checkout->code));
+
+        $this->assertSame([
+            ['info', ['order_id' => $this->checkout->code, 'http' => 200, 'transaction_status' => 'settlement']],
+        ], $logged);
     }
 
     public function test_reloading_the_page_asks_midtrans_at_most_every_30_seconds(): void
