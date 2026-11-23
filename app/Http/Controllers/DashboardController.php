@@ -5,10 +5,12 @@ namespace App\Http\Controllers;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentStatus;
 use App\Enums\ProductStatus;
+use App\Enums\StoreStatus;
 use App\Models\Checkout;
 use App\Models\Order;
 use App\Models\Payout;
 use App\Models\ProductVariant;
+use App\Models\Refund;
 use App\Models\Review;
 use App\Models\Store;
 use App\Models\User;
@@ -39,7 +41,46 @@ class DashboardController extends Controller
             'buyer' => $this->buyer($user),
             // Only for users who opened a store.
             'seller' => $user->store === null ? null : $this->seller($user->store),
+            // Same gate as the admin routes, not just a hidden menu.
+            'admin' => $user->can('admin') ? $this->admin() : null,
         ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function admin(): array
+    {
+        $pending = Store::query()->where('status', StoreStatus::Pending);
+
+        return [
+            'counts' => [
+                'pending_stores' => (clone $pending)->count(),
+                // New this week: older ones were already seen in the
+                // review list, so they shouldn't nag forever.
+                'low_reviews' => Review::query()
+                    ->where('rating', '<=', 2)
+                    ->whereNull('hidden_at')
+                    ->where('created_at', '>=', now()->subDays(7))
+                    ->count(),
+                'payouts' => Payout::query()->needsAttention()->count(),
+                'refunds' => Refund::query()->needsAttention()->count(),
+            ],
+            // First come, first served, as on the "Toko" page.
+            'pending_stores' => $pending
+                ->with('user:id,name')
+                ->oldest()
+                ->orderBy('id')
+                ->limit(5)
+                ->get()
+                ->map(fn (Store $s) => [
+                    'id' => $s->id,
+                    'name' => $s->name,
+                    'owner' => $s->user->name,
+                    'created_at' => $s->created_at?->toIso8601String(),
+                ])
+                ->all(),
+        ];
     }
 
     /**

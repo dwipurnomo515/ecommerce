@@ -22,13 +22,8 @@ use Inertia\Response;
  */
 class FinanceController extends Controller
 {
-    /** Pending longer than this: the queue gave up or the worker is down. */
-    private const STUCK_AFTER_MINUTES = 60;
-
     public function index(): Response
     {
-        $stuckBefore = now()->subMinutes(self::STUCK_AFTER_MINUTES);
-
         // Commission lines are negative in the stores' books: Zetago's
         // income is their absolute value.
         $commission = fn ($since = null) => (int) -LedgerEntry::query()
@@ -48,9 +43,7 @@ class FinanceController extends Controller
             ],
             'payouts' => Payout::query()
                 ->with('store:id,name')
-                ->where(fn ($q) => $q
-                    ->where(fn ($q) => $q->where('status', Payout::PENDING)->where('created_at', '<', $stuckBefore))
-                    ->orWhere(fn ($q) => $q->where('status', Payout::FAILED)->where('created_at', '>=', now()->subDays(7))))
+                ->needsAttention()
                 ->orderBy('id')
                 ->get()
                 ->map(fn (Payout $p) => [
@@ -67,9 +60,7 @@ class FinanceController extends Controller
                 ]),
             'refunds' => Refund::query()
                 ->with('checkout:id,code')
-                ->where(fn ($q) => $q
-                    ->where(fn ($q) => $q->where('status', Refund::PENDING)->where('created_at', '<', $stuckBefore))
-                    ->orWhere('status', Refund::FAILED))
+                ->needsAttention()
                 ->orderBy('id')
                 ->get()
                 ->map(fn (Refund $r) => [

@@ -7,8 +7,10 @@ use App\Enums\PaymentStatus;
 use App\Models\Address;
 use App\Models\Checkout;
 use App\Models\Order;
+use App\Models\Payout;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\Refund;
 use App\Models\Review;
 use App\Models\Store;
 use App\Models\User;
@@ -188,17 +190,66 @@ class DashboardTest extends TestCase
         $this->assertSame($store->id, $this->buyer->fresh()?->store?->id);
     }
 
+    public function test_the_admin_sees_what_needs_a_decision(): void
+    {
+        $admin = User::factory()->admin()->create();
+        Store::factory()->create(['name' => 'Toko Lama', 'created_at' => now()->subDays(3)]);
+        Store::factory()->create(['name' => 'Toko Baru']);
+        Store::factory()->active()->create(); // already decided
+
+        // Low and recent counts; high, hidden or older than a week doesn't.
+        $done = $this->placeOrder($this->buyer);
+        $this->moveTo($done, OrderStatus::Completed);
+        $this->review($done, reply: null, rating: 1);
+        $this->review($this->placeOrder($this->buyer), reply: null, rating: 5);
+        $this->review($this->placeOrder($this->buyer), reply: null, rating: 2, hidden: true);
+        $this->travel(-8)->days();
+        $this->review($this->placeOrder($this->buyer), reply: null, rating: 1);
+        $this->travelBack();
+
+        // Payouts: stuck for 2 hours counts, a fresh pending one doesn't.
+        // (One pending payout per store at most, so two stores.)
+        $payout = fn (int $storeId, int $minutesAgo) => (new Payout)->forceFill([
+            'store_id' => $storeId, 'amount' => 60_000, 'bank' => 'bca',
+            'account_number' => '1234567890', 'account_name' => 'Budi', 'status' => Payout::PENDING,
+            'created_at' => now()->subMinutes($minutesAgo),
+        ])->save();
+        $payout($done->store_id, 120);
+        $payout(Store::factory()->active()->create()->id, 5);
+
+        // A failed refund: the buyer is still owed.
+        (new Refund)->forceFill([
+            'checkout_id' => $done->checkout_id, 'amount' => 68_000, 'reason' => 'Uji',
+            'status' => Refund::FAILED, 'failure_reason' => 'Bank menolak',
+        ])->save();
+
+        $this->actingAs($admin)->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('admin.counts', ['pending_stores' => 2, 'low_reviews' => 1, 'payouts' => 1, 'refunds' => 1])
+                // Oldest first.
+                ->where('admin.pending_stores.0.name', 'Toko Lama')
+                ->where('admin.pending_stores.1.name', 'Toko Baru'));
+    }
+
+    public function test_only_admins_get_the_admin_section(): void
+    {
+        Store::factory()->create(); // something an admin would see
+
+        $this->actingAs($this->buyer)->get(route('dashboard'))
+            ->assertInertia(fn (Assert $page) => $page->where('admin', null));
+    }
+
     /**
      * A review on the order's first item, as WriteReview would store it
      * (that path itself is covered in Shop\ReviewTest).
      */
-    private function review(Order $order, ?string $reply, bool $hidden = false): void
+    private function review(Order $order, ?string $reply, bool $hidden = false, int $rating = 5): void
     {
         $item = $order->items()->firstOrFail();
 
         (new Review)->forceFill([
             'order_item_id' => $item->id, 'product_id' => $item->product_id, 'store_id' => $order->store_id,
-            'user_id' => User::factory()->create()->id, 'rating' => 5, 'body' => 'Bagus.',
+            'user_id' => User::factory()->create()->id, 'rating' => $rating, 'body' => 'Bagus.',
             'seller_reply' => $reply,
             'hidden_at' => $hidden ? now() : null, 'hidden_reason' => $hidden ? 'Spam' : null,
         ])->save();

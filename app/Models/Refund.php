@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -35,6 +37,20 @@ class Refund extends Model
     public function checkout(): BelongsTo
     {
         return $this->belongsTo(Checkout::class);
+    }
+
+    /**
+     * What an admin should look at: stuck (pending for over an hour) or
+     * failed, however old: the buyer is still owed until it's refunded.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function needsAttention(Builder $query): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->where(fn (Builder $q) => $q->where('status', self::PENDING)->where('created_at', '<', now()->subMinutes(Payout::STUCK_AFTER_MINUTES)))
+            ->orWhere('status', self::FAILED));
     }
 
     public function label(): string

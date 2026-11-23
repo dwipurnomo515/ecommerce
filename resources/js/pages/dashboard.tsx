@@ -1,12 +1,16 @@
 import { Head, Link } from '@inertiajs/react';
 import {
+    Banknote,
     ChevronRight,
     CreditCard,
     Inbox,
     MessageSquare,
+    MessageSquareWarning,
     PackageCheck,
     PackageX,
+    Store,
     Truck,
+    Undo2,
     Wallet,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -16,6 +20,9 @@ import { formatDate } from '@/lib/date';
 import { formatRupiah } from '@/lib/money';
 import { cn } from '@/lib/utils';
 import { dashboard, home } from '@/routes';
+import { index as adminFinance } from '@/routes/admin/finance';
+import { index as adminReviews } from '@/routes/admin/reviews';
+import { index as adminStores } from '@/routes/admin/stores';
 import { placed } from '@/routes/checkout';
 import { index as myOrders } from '@/routes/orders';
 import { index as sellerBalance } from '@/routes/seller/balance';
@@ -237,12 +244,107 @@ function SellerSection({ seller }: { seller: SellerSummary }) {
     );
 }
 
+type AdminSummary = {
+    counts: {
+        pending_stores: number;
+        low_reviews: number;
+        payouts: number;
+        refunds: number;
+    };
+    pending_stores: {
+        id: number;
+        name: string;
+        owner: string;
+        created_at: string;
+    }[];
+};
+
+function AdminSection({ admin }: { admin: AdminSummary }) {
+    const { counts } = admin;
+
+    return (
+        <section className="grid gap-4" aria-labelledby="admin">
+            <h2 id="admin" className="text-xl font-semibold tracking-tight">
+                Perlu ditangani admin
+            </h2>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Stat
+                    icon={Store}
+                    label="Toko menunggu"
+                    value={counts.pending_stores}
+                    hint="Setujui atau tolak"
+                    href={adminStores()}
+                    alert
+                />
+                <Stat
+                    icon={MessageSquareWarning}
+                    label="Ulasan rating rendah"
+                    value={counts.low_reviews}
+                    hint="Bintang 1–2, 7 hari terakhir"
+                    href={adminReviews()}
+                />
+                <Stat
+                    icon={Banknote}
+                    label="Penarikan bermasalah"
+                    value={counts.payouts}
+                    hint="Macet atau gagal"
+                    href={adminFinance()}
+                    alert
+                />
+                <Stat
+                    icon={Undo2}
+                    label="Refund bermasalah"
+                    value={counts.refunds}
+                    hint="Pembeli masih menunggu dana"
+                    href={adminFinance()}
+                    alert
+                />
+            </div>
+
+            {admin.pending_stores.length > 0 && (
+                <div className="grid gap-2">
+                    <h3 className="text-sm font-medium text-muted-foreground">
+                        Toko menunggu persetujuan
+                    </h3>
+                    <ul className="divide-y divide-border rounded-lg border border-border">
+                        {admin.pending_stores.map((s) => (
+                            <li key={s.id}>
+                                <Link
+                                    href={adminStores()}
+                                    className="flex items-center gap-4 p-4 hover:bg-muted/40"
+                                >
+                                    <div className="grid min-w-0 flex-1 gap-0.5">
+                                        <p className="truncate text-sm font-medium">
+                                            {s.name}
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {s.owner} · daftar{' '}
+                                            {formatDate(s.created_at)}
+                                        </p>
+                                    </div>
+                                    <ChevronRight
+                                        className="size-4 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            )}
+        </section>
+    );
+}
+
 export default function Dashboard({
     buyer,
     seller,
+    admin,
 }: {
     buyer: BuyerSummary;
     seller: SellerSummary | null;
+    admin: AdminSummary | null;
 }) {
     const nothingGoingOn =
         buyer.counts.unpaid +
@@ -376,6 +478,8 @@ export default function Dashboard({
                 </section>
 
                 {seller && <SellerSection seller={seller} />}
+
+                {admin && <AdminSection admin={admin} />}
             </div>
         </>
     );

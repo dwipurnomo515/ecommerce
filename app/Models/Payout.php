@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -33,6 +35,9 @@ class Payout extends Model
 
     public const MINIMUM = 50_000;
 
+    /** Pending longer than this counts as stuck. */
+    public const STUCK_AFTER_MINUTES = 60;
+
     /** Bank codes we accept, with display names. */
     public const BANKS = [
         'bca' => 'BCA',
@@ -52,6 +57,21 @@ class Payout extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * What an admin should look at: stuck (pending for over an hour, so
+     * the queue gave up or the worker is down) or failed this week. One
+     * rule for the "Keuangan" page and the admin summary.
+     *
+     * @param  Builder<self>  $query
+     */
+    #[Scope]
+    protected function needsAttention(Builder $query): void
+    {
+        $query->where(fn (Builder $q) => $q
+            ->where(fn (Builder $q) => $q->where('status', self::PENDING)->where('created_at', '<', now()->subMinutes(self::STUCK_AFTER_MINUTES)))
+            ->orWhere(fn (Builder $q) => $q->where('status', self::FAILED)->where('created_at', '>=', now()->subDays(7))));
     }
 
     public function label(): string
