@@ -30,6 +30,11 @@ export default defineConfig({
             formVariants: true,
         }),
     ]),
+    // SSR build: bundle every dependency into bootstrap/ssr/ssr.js, so the
+    // production SSR container is just Node + that file, no node_modules.
+    ssr: {
+        noExternal: true,
+    },
     server: {
         // Inside Docker: listen on all interfaces, tell the browser to reach
         // Vite via localhost, and poll for changes (file events from a

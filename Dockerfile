@@ -36,8 +36,9 @@ RUN ln -s ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
 USER www-data
 
 # =============================================================================
-# Production: three build stages, only the last one is shipped.
+# Production: two images are shipped, the app and its SSR server.
 #   docker build --target production -t zetago:latest .
+#   docker build --target ssr -t zetago-ssr:latest .
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -63,10 +64,28 @@ RUN npm ci --no-audit --no-fund
 COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /var/www/html/vendor ./vendor
 RUN composer dump-autoload --no-dev --no-scripts \
-    && npm run build
+    && npm run build:ssr
 
 # -----------------------------------------------------------------------------
-# 3. The shipped image: PHP + nginx, app code, vendor/, built assets.
+# 3a. SSR server: renders the first page of a visit to HTML (SEO, link
+#     previews). Node + one self-contained file (vite.config.ts bundles all
+#     dependencies), so no node_modules, no PHP, no app code.
+#   docker build --target ssr -t zetago-ssr:latest .
+# -----------------------------------------------------------------------------
+FROM node:${NODE_VERSION}-alpine AS ssr
+
+ENV NODE_ENV=production
+WORKDIR /app
+COPY --from=assets --chown=node:node /var/www/html/bootstrap/ssr ./
+USER node
+EXPOSE 13714
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s \
+    CMD wget -qO- http://127.0.0.1:13714/health || exit 1
+# Source maps: errors point at resources/js/..., not the bundled file.
+CMD ["node", "--enable-source-maps", "ssr.js"]
+
+# -----------------------------------------------------------------------------
+# 3b. The shipped image: PHP + nginx, app code, vendor/, built assets.
 #    No Node, no node_modules, no tests, no .env (secrets come from the
 #    environment at runtime), runs as the non-root www-data user.
 # -----------------------------------------------------------------------------

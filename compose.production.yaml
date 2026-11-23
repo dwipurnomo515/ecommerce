@@ -1,6 +1,7 @@
 # Production stack: one server, everything in Docker.
 #
 #   docker build --target production -t zetago:latest .
+#   docker build --target ssr -t zetago-ssr:latest .
 #   docker compose -f compose.production.yaml --env-file .env.production up -d
 #
 # --env-file matters twice: the app containers read .env.production as their
@@ -44,6 +45,13 @@ services:
             # Cloudflare, a load balancer...), see TRUSTED_PROXIES.
             # APP_PORT=127.0.0.1:8080 keeps it off the internet.
             - '${APP_PORT:-8080}:8080'
+        environment:
+            # First page of a visit rendered by the ssr service. If it is
+            # down or slow (>3 s), pages are rendered by the browser instead.
+            INERTIA_SSR_ENABLED: 'true'
+            INERTIA_SSR_URL: http://ssr:13714
+            # The bundle lives in the ssr image, not in this one.
+            INERTIA_SSR_ENSURE_BUNDLE_EXISTS: 'false'
         depends_on:
             migrate:
                 condition: service_completed_successfully
@@ -83,6 +91,13 @@ services:
         depends_on:
             migrate:
                 condition: service_completed_successfully
+
+    # Node server that renders pages to HTML for the web service. No
+    # ports, no secrets, no database: it only turns page data into HTML.
+    ssr:
+        image: zetago-ssr:latest
+        restart: unless-stopped
+        read_only: true
 
     # No `ports:` on pgsql and redis: reachable only by the containers on
     # this Compose network, never from the internet.
