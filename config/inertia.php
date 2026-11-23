@@ -16,14 +16,28 @@ return [
     */
 
     'ssr' => [
-        // Off until SSR is actually set up (there is no resources/js/ssr.tsx
-        // yet). Left on, every full page load tried to reach an SSR server
-        // that doesn't exist, waited, then fell back to client rendering:
-        // slow pages, and in tests a hidden outgoing HTTP call. Worth
-        // turning on for SEO of product pages when deploying (Tahap 9).
+        // First page of a visit rendered to HTML on the server (SEO, link
+        // previews; see resources/js/ssr.tsx). Off by default: when on and
+        // the SSR server is down, every full page load waits for it before
+        // falling back to browser rendering. Tests keep it off (phpunit.xml).
         'enabled' => (bool) env('INERTIA_SSR_ENABLED', false),
-        'url' => 'http://127.0.0.1:13714',
-        // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
+
+        // Production: the Node SSR server (bootstrap/ssr/ssr.js).
+        'url' => env('INERTIA_SSR_URL', 'http://127.0.0.1:13714'),
+
+        // Dev: the Vite dev server renders at /__inertia_ssr. public/hot
+        // says http://localhost:5173, which is the BROWSER's view; from
+        // the app container Vite is http://vite:5173.
+        'hot_url' => env('INERTIA_SSR_HOT_URL'),
+
+        // A slow render must not hold the page for long: after this many
+        // seconds the page is sent without SSR (the browser renders it).
+        'timeout' => (int) env('INERTIA_SSR_TIMEOUT', 3),
+
+        // Production: skip SSR entirely when the bundle was never built.
+        'ensure_bundle_exists' => (bool) env('INERTIA_SSR_ENSURE_BUNDLE_EXISTS', true),
+
+        'throw_on_error' => false,
 
     ],
 

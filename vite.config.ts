@@ -39,6 +39,10 @@ export default defineConfig({
             port: 5173,
             strictPort: true,
             hmr: { host: 'localhost' },
+            // The app container asks Vite to server-render pages at
+            // http://vite:5173/__inertia_ssr. Vite rejects unknown Host
+            // headers (DNS rebinding protection), so allow just that name.
+            allowedHosts: ['vite'],
         }),
         watch: {
             usePolling: inDocker,
