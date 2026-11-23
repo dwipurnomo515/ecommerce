@@ -26,4 +26,5 @@ resources/js/wayfinder
 .claude
 .vscode
 compose.yaml
+compose.production.yaml
 Dockerfile

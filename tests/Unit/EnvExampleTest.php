@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use PHPUnit\Framework\TestCase;
 
@@ -13,30 +14,43 @@ use PHPUnit\Framework\TestCase;
 class EnvExampleTest extends TestCase
 {
     /**
-     * Local Docker defaults that are not secrets anywhere else.
+     * Per committed example file: values allowed although the name looks
+     * secret. Only local Docker defaults; production allows none.
      */
     private const ALLOWED = [
-        'DB_PASSWORD' => 'secret',
+        '.env.example' => ['DB_PASSWORD' => 'secret'],
+        '.env.production.example' => [],
     ];
 
+    /**
+     * @return array<string, array{string}>
+     */
+    public static function exampleFiles(): array
+    {
+        $files = array_keys(self::ALLOWED);
+
+        return array_combine($files, array_map(fn (string $f) => [$f], $files));
+    }
+
     #[Test]
-    public function env_example_contains_no_secrets(): void
+    #[DataProvider('exampleFiles')]
+    public function env_example_contains_no_secrets(string $file): void
     {
         $leaks = [];
 
-        foreach ($this->variables(dirname(__DIR__, 2).'/.env.example') as $name => $value) {
+        foreach ($this->variables(dirname(__DIR__, 2).'/'.$file) as $name => $value) {
             if (! preg_match('/(KEY|SECRET|PASSWORD|TOKEN)(_ID)?$/', $name)) {
                 continue;
             }
 
-            if (in_array($value, ['', 'null'], true) || (self::ALLOWED[$name] ?? null) === $value) {
+            if (in_array($value, ['', 'null'], true) || (self::ALLOWED[$file][$name] ?? null) === $value) {
                 continue;
             }
 
             $leaks[] = $name;
         }
 
-        $this->assertSame([], $leaks, 'Kosongkan nilai rahasia di .env.example: '.implode(', ', $leaks));
+        $this->assertSame([], $leaks, "Kosongkan nilai rahasia di {$file}: ".implode(', ', $leaks));
     }
 
     #[Test]

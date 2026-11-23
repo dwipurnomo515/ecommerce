@@ -1,0 +1,134 @@
+# Production stack: one server, everything in Docker.
+#
+#   docker build --target production -t zetago:latest .
+#   docker compose -f compose.production.yaml --env-file .env.production up -d
+#
+# --env-file matters twice: the app containers read .env.production as their
+# environment (env_file below), and Compose itself uses it to fill the
+# ${...} values in this file. Without it Compose would read the DEV .env.
+#
+# Order on every `up`: pgsql/redis healthy -> migrate runs once and exits
+# -> web, queue and scheduler start on the migrated schema.
+
+name: zetago
+
+x-app: &app
+    image: zetago:latest
+    env_file: .env.production
+    restart: unless-stopped
+    volumes:
+        # Uploaded product photos and store logos. Lives outside the image
+        # so a new release (new image) keeps them.
+        - storage-app:/var/www/html/storage/app
+    depends_on:
+        pgsql:
+            condition: service_healthy
+        redis:
+            condition: service_healthy
+
+services:
+    # Runs pending migrations, then exits. The other app services wait for
+    # it to FINISH SUCCESSFULLY: a failed migration keeps the old containers
+    # serving instead of starting new code on a half-migrated database.
+    migrate:
+        <<: *app
+        command: ['php', '/var/www/html/artisan', 'migrate', '--force']
+        restart: 'no'
+        healthcheck:
+            disable: true
+
+    web:
+        <<: *app
+        ports:
+            # Plain HTTP. In front of it goes the HTTPS terminator (Caddy,
+            # Cloudflare, a load balancer...), see TRUSTED_PROXIES.
+            - '${APP_PORT:-8080}:8080'
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
+
+    queue:
+        <<: *app
+        # queue:work (not queue:listen): boots Laravel once, fast. It does
+        # not see new code, which is fine: new code = new image = new
+        # container. --max-time restarts it hourly to release memory.
+        command:
+            [
+                'php',
+                '/var/www/html/artisan',
+                'queue:work',
+                '--tries=3',
+                '--timeout=90',
+                '--max-time=3600',
+            ]
+        # Lets the current job finish before the container stops.
+        stop_signal: SIGTERM
+        stop_grace_period: 2m
+        healthcheck:
+            test: ['CMD', 'healthcheck-queue']
+            start_period: 10s
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
+
+    # routes/console.php: orders:expire, payments:sync, ...
+    scheduler:
+        <<: *app
+        command: ['php', '/var/www/html/artisan', 'schedule:work']
+        stop_signal: SIGTERM
+        healthcheck:
+            test: ['CMD', 'healthcheck-schedule']
+            start_period: 10s
+        depends_on:
+            migrate:
+                condition: service_completed_successfully
+
+    # No `ports:` on pgsql and redis: reachable only by the containers on
+    # this Compose network, never from the internet.
+    pgsql:
+        image: postgres:18-alpine
+        restart: unless-stopped
+        environment:
+            POSTGRES_DB: ${DB_DATABASE:?set DB_DATABASE in .env.production}
+            POSTGRES_USER: ${DB_USERNAME:?set DB_USERNAME in .env.production}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:?set DB_PASSWORD in .env.production}
+        volumes:
+            - pgsql-data:/var/lib/postgresql
+        healthcheck:
+            test:
+                [
+                    'CMD-SHELL',
+                    'pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}',
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 10
+
+    redis:
+        image: valkey/valkey:9-alpine
+        restart: unless-stopped
+        # Password even on a private network: defence in depth. The value
+        # comes from .env.production, same as the app's REDIS_PASSWORD.
+        command:
+            [
+                'valkey-server',
+                '--requirepass',
+                '${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.production}',
+                '--appendonly',
+                'yes',
+            ]
+        environment:
+            REDISCLI_AUTH: ${REDIS_PASSWORD}
+        volumes:
+            - redis-data:/data
+        healthcheck:
+            test: ['CMD', 'valkey-cli', 'ping']
+            interval: 5s
+            timeout: 3s
+            retries: 10
+
+# Back these up: pgsql-data (orders, payments) and storage-app (photos).
+volumes:
+    pgsql-data:
+    redis-data:
+    storage-app:
