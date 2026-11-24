@@ -4,6 +4,10 @@
 # App:     http://localhost:8000
 # Mailpit: http://localhost:8025
 
+# Fixed name: volumes are zetago-dev_pgsql-data etc. whatever the folder is
+# called, and never collide with the production stack (name: zetago).
+name: zetago-dev
+
 x-app: &app
     build:
         context: .
