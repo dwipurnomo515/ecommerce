@@ -1,0 +1,53 @@
+name: audit
+
+# Known security holes in our dependencies. Runs on every push and PR, and
+# weekly: a new advisory can appear for a package we installed months ago,
+# even when nobody pushes anything.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  schedule:
+    - cron: '0 1 * * 1' # Monday 01:00 UTC (08:00 WIB)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: '8.5'
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+
+      # Both read only the lock files: nothing is installed or executed.
+      # Any advisory fails; an abandoned package is reported, not fatal.
+      - name: PHP packages (composer.lock)
+        run: composer audit --locked --abandoned=report
+
+      # High and critical fail the build; low/moderate are shown in the log.
+      - name: JavaScript packages (package-lock.json)
+        if: ${{ !cancelled() }}
+        run: npm audit --audit-level=high --package-lock-only
