@@ -129,6 +129,16 @@ docker compose exec app bash                 # masuk shell container
 - **redis**: cache, session, dan antrian job
 - **mailpit**: menangkap semua email keluar saat development
 
+Halaman pertama setiap kunjungan dirender di server (SSR). Saat development, render itu
+dikerjakan oleh service `vite` (`INERTIA_SSR_HOT_URL`). Setelah `vite` di-restart, halaman
+pertama bisa butuh puluhan detik untuk dikompilasi. Selama itu halaman tetap tampil lewat
+render di browser.
+
+## Production
+
+Image production (non-root, tanpa Node dan `node_modules`), stack `compose.production.yaml`,
+HTTPS, admin pertama, rilis dan rollback, backup dan restore: lihat **[docs/deploy.md](docs/deploy.md)**.
+
 ## Catatan untuk Windows
 
 Project ini berjalan dari folder Windows (bind mount), sehingga ada dua konsekuensi:
