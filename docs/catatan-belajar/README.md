@@ -18,11 +18,32 @@ Catatan pribadi proses membangun project ini, langkah demi langkah: **apa** yang
 | 6     | [Pesanan & ulasan](06-pesanan-ulasan.md)                | ✅ Selesai |
 | 7     | [Saldo, pencairan & refund](07-saldo-pencairan.md)      | ✅ Selesai |
 | 8     | [Hardening keamanan](08-hardening.md)                   | ✅ Selesai |
-| 9     | Production (Docker image, deploy)                       | ⏳         |
+| 9     | [Production](09-production.md)                          | ✅ Selesai |
 
 Istilah yang belum familiar? Lihat [Glosarium](glosarium.md).
 
 ## Riwayat commit sejauh ini
+
+Tahap 9 (deploy ke VPS menunggu servernya ada):
+
+```
+7f0e5c1 docs: production deploy guide (Compose stack, HTTPS, backups, SSR)
+c6fcc02 ci: audit PHP and JavaScript dependencies on push, PR and weekly
+67c7c0f feat(dashboard): admin section with what needs a decision
+f7b2f27 feat(dashboard): seller section with orders to handle, stock, balance
+8dd26c4 feat(dashboard): buyer summary instead of the starter-kit placeholder
+6ae5689 fix(ssr): bundle dependencies only in the SSR build, not the dev server
+bbe44da feat(ssr): production SSR server image with a circuit breaker
+247ac65 feat(ssr): server-render the first page of a visit (dev via Vite)
+6e4b016 feat(deploy): trust only the configured HTTPS proxies (TRUSTED_PROXIES)
+9aa8f26 feat(payments): one log line per Midtrans call, without secrets or buyer data
+68187eb feat(deploy): production compose stack with a one-shot migrate service
+6a27476 feat(payments): send buyers back to their order page after redirect payments
+1dc5eb4 fix(checkout): say which region is unknown instead of asking to reload
+0b3363c feat(dev): demo products with drawn studio-style photos
+92b3821 fix(security): remove leaked RajaOngkir key from .env.example, single security headers
+b5ab43e build: production Docker image with prebuilt assets and no dev tooling
+```
 
 Tahap 8:
 
@@ -141,3 +162,11 @@ Lihat detailnya dengan `git log --stat`.
     (lihat [Tahap 8](08-hardening.md)).
 17. **Temuan yang diterima tetap dicatat.** `npm audit` yang tidak bisa diperbaiki tidak
     diabaikan diam-diam: alasannya ditulis dan ada jadwal untuk diperiksa ulang.
+18. **Rahasia yang sudah di-push dianggap bocor.** Menghapusnya dari file tidak menghapusnya dari
+    riwayat git. Perbaikannya adalah mengganti kunci, lalu memasang test agar tidak terulang
+    (lihat [Tahap 9](09-production.md#3-kunci-yang-bocor-ke-git)).
+19. **Rencanakan saat bagian lain mati.** SSR yang mati tidak boleh membuat situs mati atau
+    lambat untuk semua orang: ada cadangan render browser dan _circuit breaker_.
+20. **Jalankan seluruh test sebelum commit.** Satu callback kecil di bagian yang dipakai setiap
+    halaman pernah menggagalkan 96 test sekaligus.
+21. **Backup baru terbukti setelah restore-nya dicoba.**
